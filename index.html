@@ -59,7 +59,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--plum)}
 .info{font-size:16px;margin:4px 0}
 .info b{display:inline-block;min-width:110px;color:var(--muted);font-weight:600}
 nav{position:fixed;bottom:0;left:0;right:0;z-index:6;background:#fff;border-top:2px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
-nav button{flex:1;min-height:66px;border:0;background:none;font:inherit;font-size:14px;font-weight:600;color:var(--muted);border-top:4px solid transparent}
+nav button{flex:1;min-width:0;min-height:66px;border:0;background:none;font:inherit;font-size:14px;padding:0 2px;font-weight:600;color:var(--muted);border-top:4px solid transparent}
 nav button.on{color:var(--plum);border-top-color:var(--plum)}
 #toast{position:fixed;left:16px;right:16px;bottom:86px;z-index:9;background:var(--ink);color:#fff;padding:16px;border-radius:14px;font-weight:600;text-align:center;display:none}
 .vide{text-align:center;color:var(--muted);padding:30px 10px}
@@ -119,6 +119,9 @@ header{background:linear-gradient(90deg,#2e1428,#4a2340)}
 .choix-etoiles button.on{color:#c98b8b;border-color:#c98b8b;background:#fbf0ee}
 .avis{border-top:1px solid var(--line);padding:12px 0}
 .avis:first-child{border-top:0}
+nav.serre button{font-size:12px}
+.btn.wa{background:#1f9e55;border-color:#1f9e55;color:#fff;min-height:64px;font-size:18px}
+.choix2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
 .sep{height:2px;background:var(--line);margin:22px 0}
 </style>
 </head>
@@ -167,6 +170,8 @@ const STATUTS_INSC = {a_payer:"À payer", paiement_annonce:"Paiement annoncé", 
 let notesCache = {};
 let session = null, profil = null, params = null;
 let vue = "formations", detailId = null, editionId = null;
+const URL_APP = "https://manurebord-ctrl.github.io/Beautyskol/";
+try{const f=new URLSearchParams(location.search).get("f"); if(f){vue="detail";detailId=f;sessionStorage.setItem("bsk_entree","1");history.replaceState(null,"",location.pathname)}}catch(e){}
 let filtres = {metier:"", type:""};
 try{filtres.metier=localStorage.getItem("bsk_branche")||""}catch(e){}
 let modeCompte = "connexion", typeInscr = "eleve", recuperation = false;
@@ -201,7 +206,9 @@ function rendreNav(){
   const onglets = [["formations","Formations"],["cours","Mes cours"]];
   if(profil && (profil.role==="formatrice"||profil.role==="admin")) onglets.push(["formatrice","Formatrice"]);
   if(profil && profil.role==="admin") onglets.push(["admin","Admin"]);
+  onglets.push(["inviter","Inviter"]);
   onglets.push(["compte", session?"Compte":"Connexion"]);
+  $("#nav").classList.toggle("serre", onglets.length>5);
   const actif = vue==="detail"?"formations":(vue==="edition"?"formatrice":vue);
   $("#nav").innerHTML = onglets.map(([k,l])=>`<button class="${k===actif?"on":""}" onclick="aller('${k}')">${l}</button>`).join("");
 }
@@ -217,6 +224,7 @@ async function rendre(){
     if(vue==="edition") return await vueEdition();
     if(vue==="admin") return await vueAdmin();
     if(vue==="compte") return vueCompte();
+    if(vue==="inviter") return vueInviter();
   }catch(e){erreur(e)}
 }
 
@@ -359,6 +367,7 @@ async function vueDetail(){
     <div class="carte"><div class="ligne" style="justify-content:flex-start;gap:14px">${avatar(f.formatrice,"grand")}<div><div class="titre" style="margin:0">${esc(f.formatrice?.nom||"")}</div>
       <p class="muted">${esc([f.formatrice?.metier,f.formatrice?.ville].filter(Boolean).join(" - "))}</p>${rnf.data?.nombre?`<p>${badgeNote(rnf.data)} <span class="muted">sur toutes ses formations</span></p>`:""}</div></div>
       ${f.formatrice?.bio?`<p style="white-space:pre-line">${esc(f.formatrice.bio)}</p>`:""}</div>
+    <button class="btn wa" onclick='partagerFormation("${f.id}",${esc(JSON.stringify(f.titre||""))},${esc(JSON.stringify(f.formatrice?.nom||""))})'>Partager sur WhatsApp</button>
     <div class="sep"></div>
     ${bloc}
     <div class="sep"></div>
@@ -650,6 +659,42 @@ async function sauverParams(){
   const {error}=await sb.from("parametres").update({taux_commission:Number($("#a_taux").value||0),paiement_plateforme:$("#a_pay").value.trim(),contact:$("#a_contact").value.trim()}).eq("id",1);
   if(error) return erreur(error); await chargerParams(); toast("Réglages enregistrés"); rendre();
 }
+/* ---------- INVITER ---------- */
+let typeInvit = "eleve";
+function messageInvit(t){
+  return t==="formatrice"
+    ? `Tu donnes des formations en beauté (barbier, coiffure, onglerie, maquillage...) ? Publie-les sur Beautyskol by Melissa et trouve de nouvelles élèves. L'inscription est gratuite, la plateforme prend seulement ${taux()} % par vente.\n\n${URL_APP}`
+    : `Découvre Beautyskol by Melissa : des formations en barbier, coiffure, onglerie, maquillage et esthétique, en vidéo ou en direct, données par des pros.\n\n${URL_APP}`;
+}
+function vueInviter(){
+  app().innerHTML = `
+    <div class="hero-liste" style="${bg(PHOTOS["*"])}"><div class="tx"><b>Inviter du monde</b><small>Fais connaître Beautyskol autour de toi</small></div></div>
+    <label>Qui veux-tu inviter ?</label>
+    <div class="choix2">
+      <button class="tuile ${typeInvit==="eleve"?"on":""}" onclick="typeInvit='eleve';rendre()">Des élèves</button>
+      <button class="tuile ${typeInvit==="formatrice"?"on":""}" onclick="typeInvit='formatrice';rendre()">Des formatrices</button>
+    </div>
+    <label>Ton message (tu peux le modifier)</label>
+    <textarea id="inv_txt" style="min-height:170px">${esc(messageInvit(typeInvit))}</textarea>
+    <button class="btn wa" onclick="envoyerWhatsApp($('#inv_txt').value)">Envoyer par WhatsApp</button>
+    <div class="rang">
+      <button class="btn" style="margin:0" onclick="partagerAutre($('#inv_txt').value)">Autre appli</button>
+      <button class="btn" style="margin:0" onclick="copier($('#inv_txt').value)">Copier</button>
+    </div>
+  `;
+}
+function envoyerWhatsApp(txt){window.open("https://wa.me/?text="+encodeURIComponent(txt),"_blank")}
+async function partagerAutre(txt){
+  if(navigator.share){try{await navigator.share({text:txt});}catch(e){} }
+  else copier(txt);
+}
+async function copier(txt){
+  try{await navigator.clipboard.writeText(txt);toast("Message copié")}catch(e){toast("Copie impossible")}
+}
+function partagerFormation(id,titre,nom){
+  envoyerWhatsApp(`Regarde cette formation sur Beautyskol by Melissa : « ${titre} »${nom?" avec "+nom:""}.\n\n${URL_APP}?f=${id}`);
+}
+
 /* ---------- COMPTE ---------- */
 function vueCompte(){
   if(session && profil){

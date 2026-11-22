@@ -1,5 +1,5 @@
 /* Beautyskol – service worker : l'appli s'ouvre même avec peu de réseau */
-const CACHE = "beautyskol-v1";
+const CACHE = "beautyskol-v2";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "confidentialite.html",
   "icon-192.png", "icon-512.png", "maskable-512.png", "apple-180.png", "favicon-64.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
