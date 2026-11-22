@@ -61,6 +61,8 @@ nav button.on{color:var(--plum);border-top-color:var(--plum)}
 #toast{position:fixed;left:16px;right:16px;bottom:86px;z-index:9;background:var(--ink);color:#fff;padding:16px;border-radius:14px;font-weight:600;text-align:center;display:none}
 .vide{text-align:center;color:var(--muted);padding:30px 10px}
 .retour{background:none;border:0;font:inherit;font-weight:700;color:var(--plum);padding:10px 0;font-size:17px}
+.btn.branche{min-height:76px;font-size:21px;font-family:"Cormorant Garamond",serif;letter-spacing:.3px;background:#fff;border-color:var(--plum)}
+.btn.branche:active{background:var(--plum);color:#fff}
 .sep{height:2px;background:var(--line);margin:22px 0}
 </style>
 </head>
@@ -84,6 +86,7 @@ const STATUTS_INSC = {a_payer:"À payer", paiement_annonce:"Paiement annoncé", 
 let session = null, profil = null, params = null;
 let vue = "formations", detailId = null, editionId = null;
 let filtres = {metier:"", type:""};
+try{filtres.metier=localStorage.getItem("bsk_branche")||""}catch(e){}
 let modeCompte = "connexion", typeInscr = "eleve", recuperation = false;
 
 const $ = s => document.querySelector(s);
@@ -134,18 +137,27 @@ async function rendre(){
 }
 
 /* ---------- FORMATIONS ---------- */
+function vueAccueil(){
+  app().innerHTML = `
+    <h2>Quelle est ta branche ?</h2>
+    <p class="muted">Choisis ton métier pour voir les formations qui te concernent.</p>
+    ${METIERS.map(m=>`<button class="btn branche" onclick="choisirBranche('${m}')">${m}</button>`).join("")}
+    <button class="btn" style="border-style:dashed" onclick="choisirBranche('*')">Voir toutes les branches</button>
+  `;
+}
+function choisirBranche(m){filtres.metier=m;filtres.type="";try{localStorage.setItem("bsk_branche",m)}catch(e){}window.scrollTo(0,0);rendre()}
+function changerBranche(){filtres.metier="";try{localStorage.removeItem("bsk_branche")}catch(e){}window.scrollTo(0,0);rendre()}
+
 async function vueFormations(){
+  if(!filtres.metier) return vueAccueil();
   let q = sb.from("formations").select("*, formatrice:profiles!formations_formatrice_id_fkey(nom,ville)").eq("publie",true).order("created_at",{ascending:false});
-  if(filtres.metier) q=q.eq("metier",filtres.metier);
+  if(filtres.metier!=="*") q=q.eq("metier",filtres.metier);
   if(filtres.type) q=q.eq("type",filtres.type);
   const {data,error} = await q; if(error) throw error;
   const liste = (data||[]).filter(f=>f.type!=="direct" || !f.date_debut || new Date(f.date_debut)>new Date(Date.now()-3*3600e3));
   app().innerHTML = `
-    <h2>Trouver une formation</h2>
-    <div class="grille">
-      <button class="tuile ${filtres.metier===""?"on":""}" onclick="filtrer('metier','')">Tous les métiers</button>
-      ${METIERS.map(m=>`<button class="tuile ${filtres.metier===m?"on":""}" onclick="filtrer('metier','${m}')">${m}</button>`).join("")}
-    </div>
+    <div class="ligne"><h2 style="margin:0">${filtres.metier==="*"?"Toutes les formations":esc(filtres.metier)}</h2></div>
+    <button class="btn" onclick="changerBranche()">Changer de branche</button>
     <div class="grille" style="grid-template-columns:1fr 1fr 1fr">
       <button class="tuile ${filtres.type===""?"on":""}" onclick="filtrer('type','')">Tout</button>
       <button class="tuile ${filtres.type==="video"?"on":""}" onclick="filtrer('type','video')">En vidéo</button>
