@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" fill="none" stroke="#4a2340" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- main levee, doigts vers le haut -->
+  <!-- auriculaire -->
+  <path d="M96 200 C92 170 92 150 96 138 C99 130 109 130 111 138 L114 196"/>
+  <!-- annulaire -->
+  <path d="M114 196 L116 112 C117 102 130 102 131 112 L132 190"/>
+  <!-- majeur -->
+  <path d="M132 190 L135 96 C136 86 150 86 151 96 L150 190"/>
+  <!-- index -->
+  <path d="M150 190 L154 110 C155 100 168 100 169 110 L166 200"/>
+  <!-- pouce -->
+  <path d="M166 200 C176 196 188 186 198 172 C204 164 214 168 210 178 C200 202 188 222 176 236"/>
+  <!-- paume et poignet -->
+  <path d="M96 200 C94 226 100 246 112 260 L114 320"/>
+  <path d="M176 236 C170 250 166 262 164 270 L166 320"/>
+  <!-- ongles longs vernis -->
+  <path d="M97 140 C96 126 100 116 103.5 112 C107 116 111 126 110 140 Z" fill="#b06d78" stroke="#b06d78"/>
+  <path d="M117 114 C116 98 120 86 123.5 82 C127 86 131 98 130 114 Z" fill="#b06d78" stroke="#b06d78"/>
+  <path d="M136 98 C135 82 139 70 143 66 C147 70 151 82 150 98 Z" fill="#b06d78" stroke="#b06d78"/>
+  <path d="M155 112 C154 96 158 84 161.5 80 C165 84 169 96 168 112 Z" fill="#b06d78" stroke="#b06d78"/>
+  <path d="M203 172 C204 160 210 152 216 150 C218 156 217 166 211 176 Z" fill="#b06d78" stroke="#b06d78"/>
+  <!-- bracelet -->
+  <path d="M112 300 C130 308 150 308 166 300" stroke-width="3"/>
+  <!-- brillance -->
+  <path d="M141 72 L141 80 M137 76 L145 76" stroke="#4a2340" stroke-width="1.6"/>
+</svg>

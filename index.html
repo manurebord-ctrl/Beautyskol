@@ -70,7 +70,21 @@ nav button.on{color:var(--plum);border-top-color:var(--plum)}
 #entree .texte{font-size:18px;opacity:.9;max-width:340px;margin:0 auto 34px}
 #entree .metiers{font-size:14px;letter-spacing:2px;text-transform:uppercase;opacity:.7;margin-bottom:40px}
 #entree .btn{max-width:380px;background:#fff;color:var(--plum);border-color:#fff;min-height:64px;font-size:19px}
-#entree .btn.contour{background:transparent;color:#fff;border-color:#e8c3bd}
+#entree .btn.contour{background:rgba(46,20,40,.7);backdrop-filter:blur(2px);color:#fff;border-color:#e8c3bd}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.08;
+  background:url(img/visage-p.svg) no-repeat right -70px bottom 70px/290px, url(img/main-p.svg) no-repeat left -80px top 150px/230px}
+main{position:relative;z-index:1}
+header{background-image:url(img/outils-h.svg);background-repeat:no-repeat;background-position:right -55px center;background-size:175px}
+#entree{overflow:hidden}
+#entree .deco{position:absolute;pointer-events:none}
+#entree .d1{left:-70px;bottom:-30px;width:320px;opacity:.38}
+#entree .d2{right:-55px;top:20px;width:240px;opacity:.3}
+#entree .d3{right:-40px;bottom:-10px;width:280px;opacity:.16}
+#entree .contenu{position:relative;z-index:1;width:100%;display:flex;flex-direction:column;align-items:center}
+.banniere{display:flex;justify-content:center;align-items:flex-end;gap:6px;background:var(--plum);border-radius:20px;padding:14px 10px 0;margin:4px 0 16px;overflow:hidden}
+.banniere img{height:150px}
+.banniere .tx{color:#fff;align-self:center;text-align:center;font-family:"Cormorant Garamond",serif;font-size:22px;line-height:1.15;padding-bottom:10px}
+.banniere .tx i{color:#e8c3bd;font-size:18px}
 .sep{height:2px;background:var(--line);margin:22px 0}
 </style>
 </head>
@@ -80,6 +94,10 @@ nav button.on{color:var(--plum);border-top-color:var(--plum)}
   <div class="slogan">Formations barbier, coiffure, onglerie et beauté</div>
 </header>
 <div id="entree">
+  <img class="deco d1" src="img/visage.svg" alt="">
+  <img class="deco d2" src="img/main.svg" alt="">
+  <img class="deco d3" src="img/outils.svg" alt="">
+  <div class="contenu">
   <p class="grand">Beautyskol</p>
   <p class="by">by Melissa</p>
   <div class="trait"></div>
@@ -87,6 +105,7 @@ nav button.on{color:var(--plum);border-top-color:var(--plum)}
   <p class="metiers">Barbier - Coiffure - Onglerie - Maquillage - Esthétique - Cils</p>
   <button class="btn" onclick="entrer('formations')">Découvrir les formations</button>
   <button class="btn contour" onclick="entrer('formatrice')">Je suis formatrice</button>
+  </div>
 </div>
 <main id="app"><p class="vide">Chargement...</p></main>
 <nav id="nav"></nav>
@@ -158,6 +177,7 @@ async function rendre(){
 /* ---------- FORMATIONS ---------- */
 function vueAccueil(){
   app().innerHTML = `
+    <div class="banniere"><img src="img/visage.svg" alt=""><div class="tx">L'art de la beauté<br><i>se transmet</i></div><img src="img/main.svg" alt=""></div>
     <h2>Quelle est ta branche ?</h2>
     <p class="muted">Choisis ton métier pour voir les formations qui te concernent.</p>
     ${METIERS.map(m=>`<button class="btn branche" onclick="choisirBranche('${m}')">${m}</button>`).join("")}
