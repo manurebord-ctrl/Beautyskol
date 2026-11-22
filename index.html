@@ -99,7 +99,9 @@ function toast(m){const t=$("#toast");t.textContent=m;t.style.display="block";cl
 function erreur(e){console.error(e);toast(e?.message ? "Erreur : "+e.message : "Une erreur est survenue")}
 function lienSur(u){u=(u||"").trim();if(!u)return"";if(!/^https?:\/\//i.test(u))u="https://"+u;return u}
 function aujourdhui(){return new Date().toISOString().slice(0,10)}
-function abonnementActif(p){return p && (p.role==="admin" || (p.role==="formatrice" && p.statut==="validee" && p.abonnement_jusqua && p.abonnement_jusqua>=aujourdhui()))}
+function formatriceValidee(p){return p && (p.role==="admin" || (p.role==="formatrice" && p.statut==="validee"))}
+function taux(){return Number(params?.taux_commission ?? 10)}
+function debutMois(){const d=new Date();return new Date(d.getFullYear(),d.getMonth(),1).toISOString()}
 
 async function chargerProfil(){
   if(!session){profil=null;return}
@@ -108,10 +110,10 @@ async function chargerProfil(){
 }
 async function chargerParams(){
   const {data} = await sb.from("parametres").select("*").eq("id",1).maybeSingle();
-  params = data || {prix_abonnement:29};
+  params = data || {taux_commission:10};
 }
 
-function aller(v, id){vue=v; if(id!==undefined) detailId=id; window.scrollTo(0,0); rendre();}
+function aller(v, id){vue=v; if(typeof dernierCode!=="undefined") dernierCode=null; if(id!==undefined) detailId=id; window.scrollTo(0,0); rendre();}
 
 function rendreNav(){
   const onglets = [["formations","Formations"],["cours","Mes cours"]];
@@ -186,29 +188,30 @@ async function vueDetail(){
   let insc=null, pay=null, acces=null;
   if(session){
     const r = await sb.from("inscriptions").select("*").eq("formation_id",f.id).eq("eleve_id",session.user.id).maybeSingle(); insc=r.data;
-    if(insc && insc.statut!=="confirmee"){const p=await sb.from("paiement_infos").select("*").eq("formatrice_id",f.formatrice_id).maybeSingle(); pay=p.data;}
+    if(insc?.statut!=="confirmee" && !proprio){const p=await sb.from("paiement_infos").select("*").eq("formatrice_id",f.formatrice_id).maybeSingle(); pay=p.data;}
     if(proprio || insc?.statut==="confirmee"){const a=await sb.from("formation_acces").select("*").eq("formation_id",f.id).maybeSingle(); acces=a.data;}
   }
+  const gratuit = Number(f.prix||0)===0;
+  const champCode = `<label>Ton code d'accès</label>
+      <input id="code_acces" autocapitalize="characters" autocomplete="off" placeholder="Ex. : K7P2QX" style="font-size:22px;letter-spacing:3px;text-transform:uppercase;text-align:center">
+      <button class="btn plein" onclick="validerCode('${f.id}')">Valider mon code</button>`;
   let bloc="";
   if(proprio){
     bloc = `<div class="boite">C'est ta formation.</div>${boutonsAcces(f,acces)}<button class="btn" onclick="editer('${f.id}')">Modifier la formation</button>`;
-  }else if(!session){
-    bloc = `<button class="btn plein" onclick="aller('compte')">Se connecter pour s'inscrire</button>`;
-  }else if(!insc){
-    bloc = `<button class="btn plein" onclick="sInscrire('${f.id}')">S'inscrire à cette formation</button>
-      <p class="muted">Tu paies ensuite directement la formatrice. Dès qu'elle confirme ton paiement, tu as accès ${f.type==="direct"?"au lien du direct":"à la vidéo"}.</p>`;
-  }else if(insc.statut==="confirmee"){
+  }else if(insc?.statut==="confirmee"){
     bloc = `<div class="boite ok"><b>Inscription confirmée.</b> Bonne formation.</div>${boutonsAcces(f,acces)}`;
-  }else if(insc.statut==="refusee"){
-    bloc = `<div class="boite bad"><b>Inscription refusée.</b> Contacte la formatrice si tu penses qu'il y a une erreur.</div>
-      <button class="btn danger" onclick="annulerInsc('${insc.id}')">Supprimer l'inscription</button>`;
+  }else if(gratuit){
+    bloc = session ? `<button class="btn plein" onclick="inscrireGratuit('${f.id}')">S'inscrire gratuitement</button>`
+                   : `<button class="btn plein" onclick="aller('compte')">Se connecter pour s'inscrire</button>`;
   }else{
-    bloc = `${insc.statut==="paiement_annonce"
-        ? `<div class="boite warn"><b>Paiement annoncé.</b> La formatrice va vérifier et confirmer ton accès.</div>`
-        : `<div class="boite"><b>Étape suivante :</b> paie la formation à la formatrice, puis appuie sur « J'ai payé ».</div>`}
-      ${boitePaiement(f,insc,pay)}
-      ${insc.statut==="a_payer"?`<button class="btn plein" onclick="jaiPaye('${insc.id}')">J'ai payé</button>`:""}
-      <button class="btn danger" onclick="annulerInsc('${insc.id}')">Annuler mon inscription</button>`;
+    bloc = `<h3>Comment s'inscrire</h3>
+      <div class="carte">
+        <p><b>1.</b> Paie ${chf(f.prix)} directement à la formatrice.</p>
+        <p><b>2.</b> Elle te donne un code d'accès unique.</p>
+        <p><b>3.</b> Entre ce code ci-dessous : ${f.type==="direct"?"le lien du direct":"la vidéo"} se débloque.</p>
+      </div>
+      ${session ? boitePaiement(f,pay) + champCode
+                : `<button class="btn plein" onclick="aller('compte')">Se connecter pour voir comment payer</button>`}`;
   }
   app().innerHTML = `
     <button class="retour" onclick="aller('formations')">Retour aux formations</button>
@@ -237,30 +240,25 @@ function boutonsAcces(f,a){
   if(a.lien_direct) h+=`<a class="btn plein" href="${esc(lienSur(a.lien_direct))}" target="_blank" rel="noopener">Rejoindre le direct</a>`;
   return h || `<p class="muted">Le lien n'a pas encore été ajouté par la formatrice.</p>`;
 }
-function boitePaiement(f,insc,pay){
-  const ref = "BSK-"+insc.id.slice(0,6).toUpperCase();
-  if(!pay) return `<div class="boite"><p><b>Montant : ${chf(f.prix)}</b></p><p>La formatrice n'a pas encore indiqué ses coordonnées de paiement. Contacte-la ou reviens plus tard.</p></div>`;
+function boitePaiement(f,pay){
+  if(!pay) return `<div class="boite"><p><b>Montant : ${chf(f.prix)}</b></p><p>La formatrice n'a pas encore indiqué ses coordonnées de paiement. Contacte-la directement.</p></div>`;
   return `<div class="carte">
     <p class="info"><b>Montant</b>${chf(f.prix)}</p>
     ${pay.titulaire?`<p class="info"><b>Au nom de</b>${esc(pay.titulaire)}</p>`:""}
     ${pay.twint?`<p class="info"><b>TWINT</b>${esc(pay.twint)}</p>`:""}
     ${pay.iban?`<p class="info"><b>IBAN</b>${esc(pay.iban)}</p>`:""}
-    <p class="info"><b>Référence</b>${ref}</p>
     ${pay.remarque?`<p class="muted" style="white-space:pre-line">${esc(pay.remarque)}</p>`:""}
   </div>`;
 }
-async function sInscrire(fid){
-  const {error}=await sb.from("inscriptions").insert({formation_id:fid,eleve_id:session.user.id});
-  if(error) return erreur(error); toast("Inscription enregistrée"); rendre();
+async function validerCode(fid){
+  const c=$("#code_acces").value.trim(); if(!c) return toast("Entre ton code");
+  const {error}=await sb.rpc("utiliser_code",{fid,p_code:c});
+  if(error) return toast(error.message);
+  toast("Code accepté, bonne formation"); rendre();
 }
-async function jaiPaye(id){
-  const {error}=await sb.from("inscriptions").update({statut:"paiement_annonce"}).eq("id",id);
-  if(error) return erreur(error); toast("Merci, la formatrice va confirmer"); rendre();
-}
-async function annulerInsc(id){
-  if(!confirm("Annuler cette inscription ?")) return;
-  const {error}=await sb.from("inscriptions").delete().eq("id",id);
-  if(error) return erreur(error); toast("Inscription annulée"); rendre();
+async function inscrireGratuit(fid){
+  const {error}=await sb.rpc("inscription_gratuite",{fid});
+  if(error) return toast(error.message); toast("Inscription confirmée"); rendre();
 }
 
 /* ---------- MES COURS ---------- */
@@ -279,69 +277,82 @@ async function vueCours(){
 }
 
 /* ---------- ESPACE FORMATRICE ---------- */
+let dernierCode = null;
 async function vueFormatrice(){
   if(!profil || !(profil.role==="formatrice"||profil.role==="admin")){aller("compte");return}
-  const actif = abonnementActif(profil);
+  const ok = formatriceValidee(profil);
   let statut="";
-  if(profil.role==="admin") statut=`<div class="boite ok"><b>Compte administratrice.</b> Tes formations sont toujours visibles.</div>`;
+  if(profil.role==="admin") statut=`<div class="boite ok"><b>Compte administratrice.</b> Tu peux publier sans commission.</div>`;
   else if(profil.statut==="en_attente") statut=`<div class="boite warn"><b>Compte en attente de validation.</b> L'administratrice de Beautyskol va vérifier ton profil. Complète ta présentation dans l'onglet Compte en attendant.</div>`;
-  else if(profil.statut==="refusee") statut=`<div class="boite bad"><b>Ta demande n'a pas été acceptée.</b> Contacte Beautyskol pour en savoir plus.</div>`;
-  else if(actif) statut=`<div class="boite ok"><b>Abonnement actif</b> jusqu'au ${esc(jourFr(profil.abonnement_jusqua))}.</div>`;
-  else statut=`<div class="boite warn"><b>Abonnement inactif.</b> Tes formations ne sont pas visibles par les élèves.
-      <p>Abonnement : <b>${chf(params?.prix_abonnement)} par mois</b></p>
-      ${params?.paiement_plateforme?`<p style="white-space:pre-line">${esc(params.paiement_plateforme)}</p>`:""}
-      ${params?.contact?`<p>Contact : ${esc(params.contact)}</p>`:""}
-      <p class="muted">L'abonnement est activé par l'administratrice dès réception du paiement.</p></div>`;
+  else if(profil.statut==="refusee") statut=`<div class="boite bad"><b>Compte bloqué.</b> Contacte Beautyskol pour en savoir plus.</div>`;
 
-  const peutPublier = actif || profil.statut==="validee";
   const {data:formations} = await sb.from("formations").select("*").eq("formatrice_id",session.user.id).order("created_at",{ascending:false});
-  const ids=(formations||[]).map(f=>f.id);
-  let inscs=[];
-  if(ids.length){
-    const r=await sb.from("inscriptions").select("*, eleve:profiles!inscriptions_eleve_id_fkey(nom,email,telephone)").in("formation_id",ids).order("created_at",{ascending:false});
-    inscs=r.data||[];
-  }
+  const {data:codes} = await sb.from("codes").select("*, eleve:profiles!codes_eleve_id_fkey(nom)").eq("formatrice_id",session.user.id).order("created_at",{ascending:false});
   const {data:pay} = await sb.from("paiement_infos").select("*").eq("formatrice_id",session.user.id).maybeSingle();
-  const aTraiter = inscs.filter(i=>i.statut==="paiement_annonce"||i.statut==="a_payer");
-  const titreDe = id => (formations.find(f=>f.id===id)||{}).titre||"";
+  const utilises=(codes||[]).filter(c=>c.utilise_le);
+  const duMois=utilises.filter(c=>c.utilise_le>=debutMois());
+  const nonPaye=utilises.filter(c=>!c.commission_payee).reduce((s,c)=>s+Number(c.commission||0),0);
+  const titreDe = id => ((formations||[]).find(f=>f.id===id)||{}).titre||"";
+
+  const commission = profil.role==="admin" ? "" : `
+    <h3>Commission Beautyskol (${taux()} %)</h3>
+    <div class="rang">
+      <div class="carte" style="margin:0;text-align:center"><div class="prix">${duMois.length}</div><div class="muted">ventes ce mois</div></div>
+      <div class="carte" style="margin:0;text-align:center"><div class="prix">${chf(nonPaye).replace("Gratuit","CHF 0.-")}</div><div class="muted">à verser</div></div>
+    </div>
+    ${nonPaye>0?`<div class="boite warn">Merci de verser <b>${chf(nonPaye)}</b> à Beautyskol.
+      ${params?.paiement_plateforme?`<p style="white-space:pre-line">${esc(params.paiement_plateforme)}</p>`:""}
+      ${params?.contact?`<p>Contact : ${esc(params.contact)}</p>`:""}</div>`:`<p class="muted">Rien à verser pour le moment.</p>`}`;
 
   app().innerHTML = `
     <h2>Espace formatrice</h2>
     ${statut}
-    ${peutPublier?`<button class="btn plein" onclick="editer(null)">Nouvelle formation</button>`:""}
+    ${ok?`<button class="btn plein" onclick="editer(null)">Nouvelle formation</button>`:""}
 
-    <h3>Paiements à vérifier (${aTraiter.length})</h3>
-    ${aTraiter.length? aTraiter.map(i=>`
-      <div class="carte">
-        <div class="titre" style="margin-top:0">${esc(i.eleve?.nom||"Élève")}</div>
-        <p class="muted">${esc(titreDe(i.formation_id))}</p>
-        <p class="muted">${esc(i.eleve?.email||"")}${i.eleve?.telephone?" - "+esc(i.eleve.telephone):""}</p>
-        <p>Référence : <b>BSK-${i.id.slice(0,6).toUpperCase()}</b> - ${STATUTS_INSC[i.statut]}</p>
-        <div class="rang"><button class="btn ok" onclick="traiterInsc('${i.id}','confirmee')">Paiement reçu</button><button class="btn danger" onclick="traiterInsc('${i.id}','refusee')">Refuser</button></div>
-      </div>`).join("") : `<p class="muted">Rien à vérifier pour le moment.</p>`}
+    ${dernierCode?`<div class="boite ok" style="text-align:center">Nouveau code pour « ${esc(titreDe(dernierCode.fid))} »
+      <div style="font-size:34px;font-weight:700;letter-spacing:5px;color:var(--plum);margin:10px 0">${esc(dernierCode.code)}</div>
+      <p class="muted">Donne ce code à l'élève une fois qu'elle t'a payée. Il ne marche qu'une seule fois.</p></div>`:""}
 
     <h3>Mes formations (${(formations||[]).length})</h3>
+    <p class="muted">Quand une élève t'a payée, appuie sur « Créer un code » et donne-lui le code.</p>
     ${(formations||[]).length? formations.map(f=>{
-      const n=inscs.filter(i=>i.formation_id===f.id&&i.statut==="confirmee").length;
+      const n=utilises.filter(c=>c.formation_id===f.id).length;
+      const libres=(codes||[]).filter(c=>c.formation_id===f.id&&!c.utilise_le);
       return `<div class="carte">
         <span class="etiq">${esc(f.metier)}</span><span class="etiq ${f.type==="direct"?"direct":""}">${f.type==="direct"?"En direct":"Vidéo"}</span>
         <div class="titre">${esc(f.titre)}</div>
-        <p class="muted">${chf(f.prix)} - ${n} élève(s) confirmée(s)${f.publie?"":" - masquée"}</p>
-        <div class="rang"><button class="btn" onclick="aller('detail','${f.id}')">Voir</button><button class="btn" onclick="editer('${f.id}')">Modifier</button></div>
+        <p class="muted">${chf(f.prix)} - ${n} vente(s)${f.publie?"":" - masquée"}</p>
+        ${Number(f.prix||0)>0&&ok?`<button class="btn rose" onclick="nouveauCode('${f.id}')">Créer un code</button>`:""}
+        ${libres.length?`<p class="muted">Codes pas encore utilisés :</p>${libres.map(c=>`<div class="ligne" style="border-top:1px solid var(--line);padding:6px 0"><b style="letter-spacing:2px;font-size:18px">${esc(c.code)}</b><button class="retour" style="color:var(--bad)" onclick="supprimerCode('${c.id}')">Supprimer</button></div>`).join("")}`:""}
+        <div class="rang" style="margin-top:10px"><button class="btn" onclick="aller('detail','${f.id}')">Voir</button><button class="btn" onclick="editer('${f.id}')">Modifier</button></div>
       </div>`}).join("") : `<p class="muted">Tu n'as pas encore créé de formation.</p>`}
 
+    ${commission}
+
+    <h3>Dernières ventes</h3>
+    ${utilises.length? utilises.slice(0,30).map(c=>`<div class="carte" style="padding:12px 16px">
+      <div class="ligne"><b>${esc(c.eleve?.nom||"Élève")}</b><span class="prix" style="font-size:17px">${chf(c.montant)}</span></div>
+      <p class="muted">${esc(titreDe(c.formation_id))} - ${new Date(c.utilise_le).toLocaleDateString("fr-CH")} - code ${esc(c.code)}${profil.role==="admin"?"":c.commission_payee?" - commission payée":" - commission "+chf(c.commission)}</p>
+    </div>`).join("") : `<p class="muted">Aucune vente pour le moment.</p>`}
+
     <h3>Mes coordonnées de paiement</h3>
-    <p class="muted">Les élèves te paient directement. Ces infos leur sont montrées après leur inscription.</p>
+    <p class="muted">Les élèves te paient directement. Ces infos leur sont montrées sur tes formations.</p>
     <label>Au nom de</label><input id="p_tit" value="${esc(pay?.titulaire||profil.nom||"")}">
     <label>Numéro TWINT</label><input id="p_twint" inputmode="tel" value="${esc(pay?.twint||"")}" placeholder="079 123 45 67">
     <label>IBAN</label><input id="p_iban" value="${esc(pay?.iban||"")}" placeholder="CH00 0000 0000 0000 0000 0">
-    <label>Remarque (facultatif)</label><textarea id="p_rem" placeholder="Ex. : indiquer la référence dans le message">${esc(pay?.remarque||"")}</textarea>
+    <label>Remarque (facultatif)</label><textarea id="p_rem" placeholder="Ex. : envoie-moi ton nom par message après le paiement">${esc(pay?.remarque||"")}</textarea>
     <button class="btn plein" onclick="sauverPaiement(${pay?"true":"false"})">Enregistrer mes coordonnées</button>
   `;
 }
-async function traiterInsc(id,statut){
-  const {error}=await sb.from("inscriptions").update({statut}).eq("id",id);
-  if(error) return erreur(error); toast(statut==="confirmee"?"Accès donné à l'élève":"Inscription refusée"); rendre();
+async function nouveauCode(fid){
+  const {data,error}=await sb.rpc("creer_code",{fid});
+  if(error) return erreur(error);
+  dernierCode={fid,code:data}; window.scrollTo(0,0); rendre();
+}
+async function supprimerCode(id){
+  if(!confirm("Supprimer ce code ?")) return;
+  const {error}=await sb.from("codes").delete().eq("id",id);
+  if(error) return erreur(error); toast("Code supprimé"); rendre();
 }
 async function sauverPaiement(existe){
   const d={formatrice_id:session.user.id,titulaire:$("#p_tit").value.trim(),twint:$("#p_twint").value.trim(),iban:$("#p_iban").value.trim(),remarque:$("#p_rem").value.trim()};
@@ -407,7 +418,7 @@ async function sauverFormation(){
   else{
     d.formatrice_id=session.user.id;
     const {data,error}=await sb.from("formations").insert(d).select("id").single();
-    if(error) return erreur(error.message?.includes("row-level")?{message:"ton abonnement doit être actif pour publier"}:error);
+    if(error) return erreur(error.message?.includes("row-level")?{message:"ton compte doit être validé pour publier"}:error);
     id=data.id;
   }
   const acc={formation_id:id,video_url:typeEdition==="video"?$("#f_video").value.trim():null,lien_direct:typeEdition==="direct"?$("#f_lien").value.trim():null};
@@ -426,31 +437,39 @@ async function vueAdmin(){
   if(profil?.role!=="admin"){aller("formations");return}
   const {data,error}=await sb.from("profiles").select("*").eq("role","formatrice").order("created_at",{ascending:false});
   if(error) throw error;
+  const {data:codes}=await sb.from("codes").select("formatrice_id,utilise_le,montant,commission,commission_payee").not("utilise_le","is",null);
+  const vc=codes||[];
+  const mois=vc.filter(c=>c.utilise_le>=debutMois());
+  const aEncaisser=vc.filter(c=>!c.commission_payee).reduce((s,c)=>s+Number(c.commission||0),0);
+  const commMois=mois.reduce((s,c)=>s+Number(c.commission||0),0);
+  const statsF=id=>{const l=vc.filter(c=>c.formatrice_id===id);return{ventes:l.length,mois:l.filter(c=>c.utilise_le>=debutMois()).length,du:l.filter(c=>!c.commission_payee).reduce((s,c)=>s+Number(c.commission||0),0)}};
   const attente=data.filter(p=>p.statut==="en_attente"), valid=data.filter(p=>p.statut==="validee"), refus=data.filter(p=>p.statut==="refusee");
-  const actives=valid.filter(abonnementActif).length;
+  const z=n=>chf(n).replace("Gratuit","CHF 0.-");
   app().innerHTML = `
     <h2>Administration</h2>
     <div class="rang">
-      <div class="carte" style="margin:0;text-align:center"><div class="prix">${actives}</div><div class="muted">abonnements actifs</div></div>
-      <div class="carte" style="margin:0;text-align:center"><div class="prix">${chf(actives*(params?.prix_abonnement||0))}</div><div class="muted">par mois</div></div>
+      <div class="carte" style="margin:0;text-align:center"><div class="prix">${mois.length}</div><div class="muted">ventes ce mois</div></div>
+      <div class="carte" style="margin:0;text-align:center"><div class="prix">${z(commMois)}</div><div class="muted">commission du mois</div></div>
     </div>
+    <div class="boite ${aEncaisser>0?"warn":"ok"}" style="text-align:center">Total à encaisser : <b>${z(aEncaisser)}</b></div>
 
     <h3>Demandes à valider (${attente.length})</h3>
     ${attente.length? attente.map(p=>`<div class="carte">${infosFormatrice(p)}
       <div class="rang"><button class="btn ok" onclick="statutF('${p.id}','validee')">Valider</button><button class="btn danger" onclick="statutF('${p.id}','refusee')">Refuser</button></div></div>`).join("") : `<p class="muted">Aucune demande en attente.</p>`}
 
     <h3>Formatrices validées (${valid.length})</h3>
-    ${valid.length? valid.map(p=>{const ok=abonnementActif(p);return `<div class="carte">${infosFormatrice(p)}
-      <div class="boite ${ok?"ok":"warn"}" style="margin:8px 0">${ok?`Abonnement actif jusqu'au <b>${esc(jourFr(p.abonnement_jusqua))}</b>`:`Abonnement inactif${p.abonnement_jusqua?" (fini le "+esc(jourFr(p.abonnement_jusqua))+")":""}`}</div>
-      <div class="rang"><button class="btn plein" onclick="prolonger('${p.id}','${p.abonnement_jusqua||""}',1)">+ 1 mois</button><button class="btn" onclick="prolonger('${p.id}','${p.abonnement_jusqua||""}',12)">+ 12 mois</button></div>
-      <div class="rang" style="margin-top:10px"><button class="btn" onclick="stopAbo('${p.id}')">Arrêter l'abonnement</button><button class="btn danger" onclick="statutF('${p.id}','refusee')">Bloquer</button></div>
+    ${valid.length? valid.map(p=>{const s=statsF(p.id);return `<div class="carte">${infosFormatrice(p)}
+      <p class="info"><b>Ventes</b>${s.ventes} au total, ${s.mois} ce mois</p>
+      <div class="boite ${s.du>0?"warn":"ok"}" style="margin:8px 0">${s.du>0?`Commission due : <b>${z(s.du)}</b>`:"Commission à jour"}</div>
+      ${s.du>0?`<button class="btn ok" onclick="commissionRecue('${p.id}','${z(s.du)}')">Commission reçue</button>`:""}
+      <button class="btn danger" onclick="statutF('${p.id}','refusee')">Bloquer</button>
     </div>`}).join("") : `<p class="muted">Aucune formatrice validée.</p>`}
 
     ${refus.length?`<h3>Refusées ou bloquées (${refus.length})</h3>${refus.map(p=>`<div class="carte">${infosFormatrice(p)}<button class="btn" onclick="statutF('${p.id}','validee')">Réactiver</button></div>`).join("")}`:""}
 
-    <h3>Réglages de l'abonnement</h3>
-    <label>Prix mensuel en CHF</label><input id="a_prix" type="number" inputmode="decimal" min="0" value="${params?.prix_abonnement??29}">
-    <label>Comment les formatrices te paient</label><textarea id="a_pay" placeholder="Ex. : TWINT au 079..., ou IBAN CH..., au nom de...">${esc(params?.paiement_plateforme||"")}</textarea>
+    <h3>Réglages</h3>
+    <label>Commission en %</label><input id="a_taux" type="number" inputmode="decimal" min="0" max="100" value="${taux()}">
+    <label>Comment les formatrices te versent la commission</label><textarea id="a_pay" placeholder="Ex. : TWINT au 079..., ou IBAN CH..., au nom de...">${esc(params?.paiement_plateforme||"")}</textarea>
     <label>Contact affiché</label><input id="a_contact" value="${esc(params?.contact||"")}" placeholder="E-mail ou téléphone">
     <button class="btn plein" onclick="sauverParams()">Enregistrer les réglages</button>
   `;
@@ -466,23 +485,15 @@ async function statutF(id,statut){
   const {error}=await sb.from("profiles").update({statut}).eq("id",id);
   if(error) return erreur(error); toast("Statut mis à jour"); rendre();
 }
-async function prolonger(id,actuel,mois){
-  const base = actuel && actuel>=aujourdhui() ? new Date(actuel+"T12:00:00") : new Date();
-  base.setMonth(base.getMonth()+mois);
-  const {error}=await sb.from("profiles").update({abonnement_jusqua:base.toISOString().slice(0,10)}).eq("id",id);
-  if(error) return erreur(error); toast("Abonnement prolongé"); rendre();
-}
-async function stopAbo(id){
-  if(!confirm("Arrêter l'abonnement ? Ses formations ne seront plus visibles.")) return;
-  const hier=new Date(Date.now()-864e5).toISOString().slice(0,10);
-  const {error}=await sb.from("profiles").update({abonnement_jusqua:hier}).eq("id",id);
-  if(error) return erreur(error); toast("Abonnement arrêté"); rendre();
+async function commissionRecue(id,montant){
+  if(!confirm("Tu as bien reçu "+montant+" de cette formatrice ?")) return;
+  const {error}=await sb.rpc("commission_recue",{fid:id});
+  if(error) return erreur(error); toast("Commission enregistrée"); rendre();
 }
 async function sauverParams(){
-  const {error}=await sb.from("parametres").update({prix_abonnement:Number($("#a_prix").value||0),paiement_plateforme:$("#a_pay").value.trim(),contact:$("#a_contact").value.trim()}).eq("id",1);
+  const {error}=await sb.from("parametres").update({taux_commission:Number($("#a_taux").value||0),paiement_plateforme:$("#a_pay").value.trim(),contact:$("#a_contact").value.trim()}).eq("id",1);
   if(error) return erreur(error); await chargerParams(); toast("Réglages enregistrés"); rendre();
 }
-
 /* ---------- COMPTE ---------- */
 function vueCompte(){
   if(session && profil){
@@ -496,7 +507,7 @@ function vueCompte(){
       <label>Ville</label><input id="c_ville" value="${esc(profil.ville||"")}">
       ${profil.role!=="eleve"?`<label>Présentation (visible par les élèves)</label><textarea id="c_bio" placeholder="Ton parcours, ton salon, tes spécialités...">${esc(profil.bio||"")}</textarea>`:""}
       <button class="btn plein" onclick="sauverProfil()">Enregistrer</button>
-      ${profil.role==="eleve"?`<div class="sep"></div><h3>Tu donnes des formations ?</h3><p class="muted">Demande un compte formatrice. Après validation, tu pourras publier tes formations avec un abonnement mensuel.</p><button class="btn rose" onclick="devenirFormatrice()">Devenir formatrice</button>`:""}
+      ${profil.role==="eleve"?`<div class="sep"></div><h3>Tu donnes des formations ?</h3><p class="muted">Demande un compte formatrice. Après validation, tu pourras publier tes formations. Beautyskol prend une commission sur chaque vente.</p><button class="btn rose" onclick="devenirFormatrice()">Devenir formatrice</button>`:""}
       <div class="sep"></div>
       <button class="btn danger" onclick="deconnexion()">Se déconnecter</button>`;
     return;
