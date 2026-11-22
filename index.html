@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#4a2340">
+<meta name="theme-color" content="#2e1428">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="favicon-64.png">
+<link rel="apple-touch-icon" href="apple-180.png">
 <title>Beautyskol by Melissa</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -109,7 +112,14 @@ header{background:linear-gradient(90deg,#2e1428,#4a2340)}
 .apercu-photo{height:180px;border-radius:18px;background:var(--nude) center/cover no-repeat;border:2px dashed var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:600}
 .tuile{border-radius:999px}
 .btn{border-radius:16px}
-.sep{.sep{height:2px;background:var(--line);margin:22px 0}
+.etoiles{color:#c98b8b;letter-spacing:1px}
+.note-carte{display:inline-flex;align-items:center;gap:4px;font-size:14px;font-weight:700;color:var(--ink)}
+.choix-etoiles{display:flex;gap:6px;margin:8px 0}
+.choix-etoiles button{flex:1;min-height:56px;border:2px solid var(--line);border-radius:14px;background:#fff;font-size:28px;color:var(--line);cursor:pointer}
+.choix-etoiles button.on{color:#c98b8b;border-color:#c98b8b;background:#fbf0ee}
+.avis{border-top:1px solid var(--line);padding:12px 0}
+.avis:first-child{border-top:0}
+.sep{height:2px;background:var(--line);margin:22px 0}
 </style>
 </head>
 <body>
@@ -149,9 +159,12 @@ const PHOTOS = {
 };
 const photoDe = f => f.photo_url || PHOTOS[f.metier] || PHOTOS["*"];
 const bg = u => `background-image:url('${String(u).replace(/'/g,"%27")}')`;
+function etoiles(n){n=Math.round(Number(n)||0);return `<span class="etoiles">${"★".repeat(n)}<span style="color:var(--line)">${"★".repeat(5-n)}</span></span>`}
+function badgeNote(nt){return nt&&nt.nombre?`<span class="note-carte"><span class="etoiles">★</span>${Number(nt.moyenne).toFixed(1)} <span class="muted" style="font-weight:400">(${nt.nombre})</span></span>`:""}
 function avatar(p,cls=""){const n=(p?.nom||"?").trim()[0]?.toUpperCase()||"?";return p?.photo_url?`<div class="avatar ${cls}" style="${bg(p.photo_url)}"></div>`:`<div class="avatar ${cls}">${esc(n)}</div>`}
 const STATUTS_INSC = {a_payer:"À payer", paiement_annonce:"Paiement annoncé", confirmee:"Confirmée", refusee:"Refusée"};
 
+let notesCache = {};
 let session = null, profil = null, params = null;
 let vue = "formations", detailId = null, editionId = null;
 let filtres = {metier:"", type:""};
@@ -246,6 +259,8 @@ async function vueFormations(){
   if(filtres.type) q=q.eq("type",filtres.type);
   const {data,error} = await q; if(error) throw error;
   const liste = (data||[]).filter(f=>f.type!=="direct" || !f.date_debut || new Date(f.date_debut)>new Date(Date.now()-3*3600e3));
+  notesCache={};
+  if(liste.length){const r=await sb.from("notes_formations").select("*").in("formation_id",liste.map(f=>f.id));(r.data||[]).forEach(n=>notesCache[n.formation_id]=n);}
   app().innerHTML = `
     <div class="hero-liste" style="${bg(PHOTOS[filtres.metier]||PHOTOS["*"])}"><div class="tx"><b>${filtres.metier==="*"?"Toutes les formations":esc(filtres.metier)}</b><small>${liste.length} formation(s) disponible(s)</small></div></div>
     <button class="btn" onclick="changerBranche()">Changer de branche</button>
@@ -265,7 +280,7 @@ function carteFormation(f){
       <div class="haut"><span class="etiq">${esc(f.metier)}</span><span class="etiq ${f.type==="direct"?"direct":""}">${f.type==="direct"?"En direct":"Vidéo"}</span></div>
       <div class="bas"><div class="t">${esc(f.titre)}</div>${sous?`<div class="d">${esc(sous)}</div>`:""}</div>
     </div>
-    <div class="pied">${avatar(f.formatrice)}<div class="nom">${esc(f.formatrice?.nom||"Formatrice")}<small>${esc(f.formatrice?.ville||"")}</small></div><span class="prix">${chf(f.prix)}</span></div>
+    <div class="pied">${avatar(f.formatrice)}<div class="nom">${esc(f.formatrice?.nom||"Formatrice")}<small>${badgeNote(notesCache[f.id])||esc(f.formatrice?.ville||"")}</small></div><span class="prix">${chf(f.prix)}</span></div>
   </div>`;
 }
 
@@ -281,6 +296,30 @@ async function vueDetail(){
     if(insc?.statut!=="confirmee" && !proprio){const p=await sb.from("paiement_infos").select("*").eq("formatrice_id",f.formatrice_id).maybeSingle(); pay=p.data;}
     if(proprio || insc?.statut==="confirmee"){const a=await sb.from("formation_acces").select("*").eq("formation_id",f.id).maybeSingle(); acces=a.data;}
   }
+  const [ra,rnf] = await Promise.all([
+    sb.from("avis").select("*").eq("formation_id",f.id).order("created_at",{ascending:false}),
+    sb.from("notes_formatrices").select("*").eq("formatrice_id",f.formatrice_id).maybeSingle()]);
+  const avisListe = ra.data||[];
+  const monAvis = session ? avisListe.find(a=>a.eleve_id===session.user.id) : null;
+  const moy = avisListe.length ? avisListe.reduce((s,a)=>s+a.note,0)/avisListe.length : 0;
+  noteChoisie = monAvis?.note || 0;
+  const peutNoter = session && insc?.statut==="confirmee" && !proprio;
+  const blocAvis = `
+    <h3>Avis des élèves ${avisListe.length?`<span class="muted" style="font-weight:400">(${avisListe.length})</span>`:""}</h3>
+    ${avisListe.length?`<div class="carte"><div class="ligne"><div><div class="prix" style="font-size:30px">${moy.toFixed(1)}</div>${etoiles(moy)}</div><p class="muted" style="text-align:right">${avisListe.length} avis</p></div></div>`:`<p class="muted">Pas encore d'avis sur cette formation.</p>`}
+    ${peutNoter?`<div class="carte">
+      <b>${monAvis?"Modifier mon avis":"Donne ton avis"}</b>
+      <div class="choix-etoiles" id="choix_et">${[1,2,3,4,5].map(i=>`<button class="${i<=noteChoisie?"on":""}" onclick="choisirNote(${i})" aria-label="${i} étoile(s)">★</button>`).join("")}</div>
+      <textarea id="avis_txt" placeholder="Qu'as-tu pensé de cette formation ? (facultatif)">${esc(monAvis?.commentaire||"")}</textarea>
+      <button class="btn plein" onclick="publierAvis('${f.id}',${monAvis?"true":"false"})">${monAvis?"Mettre à jour mon avis":"Publier mon avis"}</button>
+      ${monAvis?`<button class="btn danger" onclick="supprimerAvis('${monAvis.id}')">Supprimer mon avis</button>`:""}
+    </div>`:""}
+    ${avisListe.length?`<div class="carte">${avisListe.map(a=>`<div class="avis">
+      <div class="ligne"><b>${esc(a.auteur||"Élève")}</b>${etoiles(a.note)}</div>
+      <p class="muted" style="font-size:13px">${new Date(a.created_at).toLocaleDateString("fr-CH")}</p>
+      ${a.commentaire?`<p style="white-space:pre-line">${esc(a.commentaire)}</p>`:""}
+      ${profil?.role==="admin"&&a.eleve_id!==session?.user.id?`<button class="retour" style="color:var(--bad);font-size:15px" onclick="supprimerAvis('${a.id}')">Retirer cet avis</button>`:""}
+    </div>`).join("")}</div>`:""}`;
   const gratuit = Number(f.prix||0)===0;
   const champCode = `<label>Ton code d'accès</label>
       <input id="code_acces" autocapitalize="characters" autocomplete="off" placeholder="Ex. : K7P2QX" style="font-size:22px;letter-spacing:3px;text-transform:uppercase;text-align:center">
@@ -318,10 +357,12 @@ async function vueDetail(){
     ${f.description?`<h3>Contenu</h3><p style="white-space:pre-line">${esc(f.description)}</p>`:""}
     <h3>La formatrice</h3>
     <div class="carte"><div class="ligne" style="justify-content:flex-start;gap:14px">${avatar(f.formatrice,"grand")}<div><div class="titre" style="margin:0">${esc(f.formatrice?.nom||"")}</div>
-      <p class="muted">${esc([f.formatrice?.metier,f.formatrice?.ville].filter(Boolean).join(" - "))}</p></div></div>
+      <p class="muted">${esc([f.formatrice?.metier,f.formatrice?.ville].filter(Boolean).join(" - "))}</p>${rnf.data?.nombre?`<p>${badgeNote(rnf.data)} <span class="muted">sur toutes ses formations</span></p>`:""}</div></div>
       ${f.formatrice?.bio?`<p style="white-space:pre-line">${esc(f.formatrice.bio)}</p>`:""}</div>
     <div class="sep"></div>
     ${bloc}
+    <div class="sep"></div>
+    ${blocAvis}
   `;
 }
 function boutonsAcces(f,a){
@@ -340,6 +381,20 @@ function boitePaiement(f,pay){
     ${pay.iban?`<p class="info"><b>IBAN</b>${esc(pay.iban)}</p>`:""}
     ${pay.remarque?`<p class="muted" style="white-space:pre-line">${esc(pay.remarque)}</p>`:""}
   </div>`;
+}
+let noteChoisie = 0;
+function choisirNote(n){noteChoisie=n;document.querySelectorAll("#choix_et button").forEach((b,i)=>b.classList.toggle("on",i<n))}
+async function publierAvis(fid,existe){
+  if(!noteChoisie) return toast("Choisis une note de 1 à 5 étoiles");
+  const d={note:noteChoisie,commentaire:$("#avis_txt").value.trim()||null};
+  const {error}= existe ? await sb.from("avis").update(d).eq("formation_id",fid).eq("eleve_id",session.user.id)
+                        : await sb.from("avis").insert({...d,formation_id:fid});
+  if(error) return erreur(error); toast("Merci pour ton avis"); rendre();
+}
+async function supprimerAvis(id){
+  if(!confirm("Supprimer cet avis ?")) return;
+  const {error}=await sb.from("avis").delete().eq("id",id);
+  if(error) return erreur(error); toast("Avis supprimé"); rendre();
 }
 async function validerCode(fid){
   const c=$("#code_acces").value.trim(); if(!c) return toast("Entre ton code");
@@ -612,7 +667,9 @@ function vueCompte(){
       <button class="btn plein" onclick="sauverProfil()">Enregistrer</button>
       ${profil.role==="eleve"?`<div class="sep"></div><h3>Tu donnes des formations ?</h3><p class="muted">Demande un compte formatrice. Après validation, tu pourras publier tes formations. Beautyskol prend une commission sur chaque vente.</p><button class="btn rose" onclick="devenirFormatrice()">Devenir formatrice</button>`:""}
       <div class="sep"></div>
-      <button class="btn danger" onclick="deconnexion()">Se déconnecter</button>`;
+      <button class="btn danger" onclick="deconnexion()">Se déconnecter</button>
+      <button class="retour" style="display:block;margin:18px auto 0;color:var(--muted);font-weight:600;font-size:15px" onclick="supprimerCompte()">Supprimer mon compte</button>
+      <p style="text-align:center"><a class="muted" href="confidentialite.html">Politique de confidentialité</a></p>`;
     return;
   }
   const connexion = modeCompte==="connexion";
@@ -679,6 +736,16 @@ async function devenirFormatrice(){
   const {error}=await sb.from("profiles").update({role:"formatrice"}).eq("id",session.user.id);
   if(error) return erreur(error); await chargerProfil(); toast("Demande envoyée à l'administratrice"); aller("formatrice");
 }
+async function supprimerCompte(){
+  if(!confirm("Supprimer définitivement ton compte, tes formations, tes codes, tes avis et tes photos ? Cette action ne peut pas être annulée.")) return;
+  if(!confirm("Dernière confirmation : supprimer mon compte ?")) return;
+  try{
+    const l=await sb.storage.from("photos").list(session.user.id,{limit:1000});
+    const f=(l.data||[]).map(o=>`${session.user.id}/${o.name}`); if(f.length) await sb.storage.from("photos").remove(f);
+  }catch(e){}
+  const {error}=await sb.rpc("supprimer_mon_compte"); if(error) return erreur(error);
+  await sb.auth.signOut(); toast("Compte supprimé"); aller("formations");
+}
 async function deconnexion(){await sb.auth.signOut(); aller("formations")}
 
 function entrer(ou){
@@ -691,6 +758,7 @@ function entrer(ou){
 (function(){let vu=false;try{vu=sessionStorage.getItem("bsk_entree")==="1"}catch(e){}if(!vu)document.getElementById("entree").style.display="flex";})();
 
 /* ---------- DEMARRAGE ---------- */
+if("serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 sb.auth.onAuthStateChange(async (ev, s)=>{
   session=s;
   if(ev==="PASSWORD_RECOVERY") recuperation=true;
