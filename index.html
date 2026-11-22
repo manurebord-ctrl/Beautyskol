@@ -63,29 +63,53 @@ nav button.on{color:var(--plum);border-top-color:var(--plum)}
 .retour{background:none;border:0;font:inherit;font-weight:700;color:var(--plum);padding:10px 0;font-size:17px}
 .btn.branche{min-height:76px;font-size:21px;font-family:"Cormorant Garamond",serif;letter-spacing:.3px;background:#fff;border-color:var(--plum)}
 .btn.branche:active{background:var(--plum);color:#fff}
-#entree{position:fixed;inset:0;z-index:20;background:radial-gradient(120% 80% at 50% 0%,#6b3a5e 0%,#4a2340 55%,#2e1428 100%);color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px 26px calc(30px + env(safe-area-inset-bottom))}
-#entree .grand{font-family:"Cormorant Garamond",serif;font-size:64px;font-weight:700;letter-spacing:1px;line-height:1;margin:0}
-#entree .by{font-family:"Cormorant Garamond",serif;font-style:italic;font-size:30px;color:#e8c3bd;margin:10px 0 0}
-#entree .trait{width:70px;height:2px;background:#c98b8b;margin:28px auto}
-#entree .texte{font-size:18px;opacity:.9;max-width:340px;margin:0 auto 34px}
-#entree .metiers{font-size:14px;letter-spacing:2px;text-transform:uppercase;opacity:.7;margin-bottom:40px}
-#entree .btn{max-width:380px;background:#fff;color:var(--plum);border-color:#fff;min-height:64px;font-size:19px}
-#entree .btn.contour{background:rgba(46,20,40,.7);backdrop-filter:blur(2px);color:#fff;border-color:#e8c3bd}
-body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.08;
-  background:url(img/visage-p.svg) no-repeat right -70px bottom 70px/290px, url(img/main-p.svg) no-repeat left -80px top 150px/230px}
-main{position:relative;z-index:1}
-header{background-image:url(img/outils-h.svg);background-repeat:no-repeat;background-position:right -55px center;background-size:175px}
-#entree{overflow:hidden}
-#entree .deco{position:absolute;pointer-events:none}
-#entree .d1{left:-70px;bottom:-30px;width:320px;opacity:.38}
-#entree .d2{right:-55px;top:20px;width:240px;opacity:.3}
-#entree .d3{right:-40px;bottom:-10px;width:280px;opacity:.16}
-#entree .contenu{position:relative;z-index:1;width:100%;display:flex;flex-direction:column;align-items:center}
-.banniere{display:flex;justify-content:center;align-items:flex-end;gap:6px;background:var(--plum);border-radius:20px;padding:14px 10px 0;margin:4px 0 16px;overflow:hidden}
-.banniere img{height:150px}
-.banniere .tx{color:#fff;align-self:center;text-align:center;font-family:"Cormorant Garamond",serif;font-size:22px;line-height:1.15;padding-bottom:10px}
-.banniere .tx i{color:#e8c3bd;font-size:18px}
-.sep{height:2px;background:var(--line);margin:22px 0}
+#entree{position:fixed;inset:0;z-index:20;color:#fff;display:none;flex-direction:column;justify-content:flex-end;padding:30px 24px calc(34px + env(safe-area-inset-bottom));overflow:hidden;
+  background:#1d0f1a url("https://images.unsplash.com/photo-1709477542149-f4e0e21d590b?auto=format&fit=crop&w=1000&q=70") center 25%/cover no-repeat}
+#entree::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(29,15,26,.05) 0%,rgba(29,15,26,.25) 35%,rgba(46,20,40,.88) 68%,#2e1428 100%)}
+#entree .contenu{position:relative;z-index:1;width:100%;max-width:440px;margin:0 auto}
+#entree .grand{font-family:"Cormorant Garamond",serif;font-size:60px;font-weight:700;letter-spacing:.5px;line-height:1;margin:0}
+#entree .by{font-family:"Cormorant Garamond",serif;font-style:italic;font-size:28px;color:#f0cfc8;margin:6px 0 0}
+#entree .texte{font-size:17px;opacity:.92;margin:18px 0 26px}
+#entree .btn{background:#fff;color:var(--plum);border-color:#fff;min-height:62px;font-size:18px;border-radius:999px}
+#entree .btn.contour{background:rgba(255,255,255,.08);backdrop-filter:blur(6px);color:#fff;border-color:rgba(255,255,255,.7)}
+#entree .credit{font-size:11px;opacity:.5;margin-top:14px;text-align:center}
+header{background:linear-gradient(90deg,#2e1428,#4a2340)}
+.mosaique{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.tuile-photo{position:relative;height:190px;border-radius:22px;overflow:hidden;border:0;padding:0;background:#2e1428 center/cover no-repeat;cursor:pointer;box-shadow:0 6px 18px rgba(46,20,40,.18)}
+.tuile-photo::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(30,10,25,.85) 100%)}
+.tuile-photo span{position:absolute;left:14px;right:14px;bottom:14px;z-index:1;color:#fff;font-weight:700;font-size:15px;letter-spacing:1.5px;text-transform:uppercase;text-align:left}
+.tuile-photo.large{grid-column:1/-1;height:120px}
+.tuile-photo:active{transform:scale(.98)}
+.hero-liste{position:relative;height:170px;border-radius:24px;overflow:hidden;margin:4px 0 14px;background:#2e1428 center/cover no-repeat}
+.hero-liste::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(30,10,25,.85))}
+.hero-liste .tx{position:absolute;left:18px;right:18px;bottom:16px;z-index:1;color:#fff}
+.hero-liste .tx b{display:block;font-family:"Cormorant Garamond",serif;font-size:34px;line-height:1}
+.hero-liste .tx small{opacity:.85}
+.carte-photo{background:#fff;border-radius:24px;overflow:hidden;margin:16px 0;box-shadow:0 8px 24px rgba(46,20,40,.12);cursor:pointer}
+.carte-photo:active{transform:scale(.99)}
+.carte-photo .img{position:relative;height:220px;background:#2e1428 center/cover no-repeat}
+.carte-photo .img::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 35%,rgba(25,8,20,.85) 100%)}
+.carte-photo .haut{position:absolute;top:12px;left:12px;z-index:1}
+.carte-photo .haut .etiq{background:rgba(255,255,255,.92)}
+.carte-photo .haut .etiq.direct{background:var(--rose);color:#fff}
+.carte-photo .bas{position:absolute;left:16px;right:16px;bottom:14px;z-index:1;color:#fff}
+.carte-photo .bas .t{font-size:21px;font-weight:700;line-height:1.2;text-transform:uppercase;letter-spacing:.5px}
+.carte-photo .bas .d{font-size:14px;opacity:.85;margin-top:4px}
+.carte-photo .pied{display:flex;align-items:center;gap:10px;padding:12px 16px}
+.avatar{width:42px;height:42px;border-radius:50%;background:var(--nude) center/cover no-repeat;flex:none;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--plum);border:2px solid #fff;box-shadow:0 0 0 2px var(--nude)}
+.avatar.grand{width:76px;height:76px;font-size:26px}
+.pied .nom{flex:1;font-weight:600;font-size:15px;line-height:1.2}
+.pied .nom small{display:block;color:var(--muted);font-weight:400}
+.pied .prix{font-size:18px}
+.detail-hero{position:relative;height:300px;margin:-16px -16px 16px;background:#2e1428 center/cover no-repeat}
+.detail-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.25) 0%,rgba(0,0,0,0) 30%,rgba(25,8,20,.9) 100%)}
+.detail-hero .retour-rond{position:absolute;top:14px;left:14px;z-index:2;height:44px;padding:0 16px;border-radius:999px;border:0;background:rgba(255,255,255,.92);color:var(--plum);font:inherit;font-weight:700}
+.detail-hero .bas{position:absolute;left:18px;right:18px;bottom:18px;z-index:1;color:#fff}
+.detail-hero .bas h1{font-size:27px;line-height:1.15;margin:8px 0 0;text-transform:uppercase;letter-spacing:.5px}
+.apercu-photo{height:180px;border-radius:18px;background:var(--nude) center/cover no-repeat;border:2px dashed var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:600}
+.tuile{border-radius:999px}
+.btn{border-radius:16px}
+.sep{.sep{height:2px;background:var(--line);margin:22px 0}
 </style>
 </head>
 <body>
@@ -94,18 +118,14 @@ header{background-image:url(img/outils-h.svg);background-repeat:no-repeat;backgr
   <div class="slogan">Formations barbier, coiffure, onglerie et beauté</div>
 </header>
 <div id="entree">
-  <img class="deco d1" src="img/visage.svg" alt="">
-  <img class="deco d2" src="img/main.svg" alt="">
-  <img class="deco d3" src="img/outils.svg" alt="">
   <div class="contenu">
   <p class="grand">Beautyskol</p>
   <p class="by">by Melissa</p>
-  <div class="trait"></div>
-  <p class="texte">Les formations des pros de la beauté, en vidéo ou en direct.</p>
-  <p class="metiers">Barbier - Coiffure - Onglerie - Maquillage - Esthétique - Cils</p>
+  <p class="texte">Les formations des pros de la beauté. Barbier, coiffure, onglerie, maquillage, en vidéo ou en direct.</p>
   <button class="btn" onclick="entrer('formations')">Découvrir les formations</button>
   <button class="btn contour" onclick="entrer('formatrice')">Je suis formatrice</button>
-  </div>
+  <p class="credit">Photos : Unsplash</p>
+</div>
 </div>
 <main id="app"><p class="vide">Chargement...</p></main>
 <nav id="nav"></nav>
@@ -117,6 +137,19 @@ const SUPABASE_KEY = "sb_publishable_200ncSgnGI_PSjQSOH0xmA_d08ZHQlb";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const METIERS = ["Barbier","Coiffure","Onglerie","Maquillage","Esthétique","Cils et sourcils"];
+const U = id => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=900&q=70`;
+const PHOTOS = {
+  "Barbier":U("1634480257305-7f4ca3582e6a"),
+  "Coiffure":U("1634480258143-ffb5e6df0029"),
+  "Onglerie":U("1457972729786-0411a3b2b626"),
+  "Maquillage":U("1709477542170-f11ee7d471a0"),
+  "Esthétique":U("1761718209835-c8586b7dcac0"),
+  "Cils et sourcils":U("1728432757040-1579d710f607"),
+  "*":U("1709477542149-f4e0e21d590b")
+};
+const photoDe = f => f.photo_url || PHOTOS[f.metier] || PHOTOS["*"];
+const bg = u => `background-image:url('${String(u).replace(/'/g,"%27")}')`;
+function avatar(p,cls=""){const n=(p?.nom||"?").trim()[0]?.toUpperCase()||"?";return p?.photo_url?`<div class="avatar ${cls}" style="${bg(p.photo_url)}"></div>`:`<div class="avatar ${cls}">${esc(n)}</div>`}
 const STATUTS_INSC = {a_payer:"À payer", paiement_annonce:"Paiement annoncé", confirmee:"Confirmée", refusee:"Refusée"};
 
 let session = null, profil = null, params = null;
@@ -174,14 +207,33 @@ async function rendre(){
   }catch(e){erreur(e)}
 }
 
+/* ---------- PHOTOS ---------- */
+function reduireImage(file,max){
+  return new Promise((ok,ko)=>{
+    const img=new Image(); const url=URL.createObjectURL(file);
+    img.onload=()=>{const r=Math.min(1,max/Math.max(img.width,img.height));const c=document.createElement("canvas");c.width=Math.round(img.width*r);c.height=Math.round(img.height*r);
+      c.getContext("2d").drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);c.toBlob(b=>b?ok(b):ko(new Error("image illisible")),"image/jpeg",.82)};
+    img.onerror=()=>ko(new Error("image illisible")); img.src=url;
+  });
+}
+async function envoyerPhoto(file,max){
+  toast("Envoi de la photo...");
+  const blob=await reduireImage(file,max);
+  const chemin=`${session.user.id}/${Date.now()}.jpg`;
+  const {error}=await sb.storage.from("photos").upload(chemin,blob,{contentType:"image/jpeg",upsert:false});
+  if(error) throw error;
+  return sb.storage.from("photos").getPublicUrl(chemin).data.publicUrl;
+}
+
 /* ---------- FORMATIONS ---------- */
 function vueAccueil(){
   app().innerHTML = `
-    <div class="banniere"><img src="img/visage.svg" alt=""><div class="tx">L'art de la beauté<br><i>se transmet</i></div><img src="img/main.svg" alt=""></div>
-    <h2>Quelle est ta branche ?</h2>
+    <h2 style="margin-bottom:2px">Quelle est ta branche ?</h2>
     <p class="muted">Choisis ton métier pour voir les formations qui te concernent.</p>
-    ${METIERS.map(m=>`<button class="btn branche" onclick="choisirBranche('${m}')">${m}</button>`).join("")}
-    <button class="btn" style="border-style:dashed" onclick="choisirBranche('*')">Voir toutes les branches</button>
+    <div class="mosaique">
+      ${METIERS.map(m=>`<button class="tuile-photo" style="${bg(PHOTOS[m])}" onclick="choisirBranche('${m}')"><span>${m}</span></button>`).join("")}
+      <button class="tuile-photo large" style="${bg(PHOTOS["*"])}" onclick="choisirBranche('*')"><span>Toutes les branches</span></button>
+    </div>
   `;
 }
 function choisirBranche(m){filtres.metier=m;filtres.type="";try{localStorage.setItem("bsk_branche",m)}catch(e){}window.scrollTo(0,0);rendre()}
@@ -189,13 +241,13 @@ function changerBranche(){filtres.metier="";try{localStorage.removeItem("bsk_bra
 
 async function vueFormations(){
   if(!filtres.metier) return vueAccueil();
-  let q = sb.from("formations").select("*, formatrice:profiles!formations_formatrice_id_fkey(nom,ville)").eq("publie",true).order("created_at",{ascending:false});
+  let q = sb.from("formations").select("*, formatrice:profiles!formations_formatrice_id_fkey(nom,ville,photo_url)").eq("publie",true).order("created_at",{ascending:false});
   if(filtres.metier!=="*") q=q.eq("metier",filtres.metier);
   if(filtres.type) q=q.eq("type",filtres.type);
   const {data,error} = await q; if(error) throw error;
   const liste = (data||[]).filter(f=>f.type!=="direct" || !f.date_debut || new Date(f.date_debut)>new Date(Date.now()-3*3600e3));
   app().innerHTML = `
-    <div class="ligne"><h2 style="margin:0">${filtres.metier==="*"?"Toutes les formations":esc(filtres.metier)}</h2></div>
+    <div class="hero-liste" style="${bg(PHOTOS[filtres.metier]||PHOTOS["*"])}"><div class="tx"><b>${filtres.metier==="*"?"Toutes les formations":esc(filtres.metier)}</b><small>${liste.length} formation(s) disponible(s)</small></div></div>
     <button class="btn" onclick="changerBranche()">Changer de branche</button>
     <div class="grille" style="grid-template-columns:1fr 1fr 1fr">
       <button class="tuile ${filtres.type===""?"on":""}" onclick="filtrer('type','')">Tout</button>
@@ -207,18 +259,19 @@ async function vueFormations(){
 }
 function filtrer(k,v){filtres[k]=v;rendre()}
 function carteFormation(f){
-  return `<div class="carte clic" onclick="aller('detail','${f.id}')">
-    <span class="etiq">${esc(f.metier)}</span><span class="etiq ${f.type==="direct"?"direct":""}">${f.type==="direct"?"En direct":"Vidéo"}</span>
-    <div class="titre">${esc(f.titre)}</div>
-    <p class="muted">Par ${esc(f.formatrice?.nom||"Formatrice")}${f.formatrice?.ville?" - "+esc(f.formatrice.ville):""}</p>
-    ${f.type==="direct"&&f.date_debut?`<p class="muted">${esc(dateFr(f.date_debut))}</p>`:""}
-    <div class="ligne" style="margin-top:8px"><span class="prix">${chf(f.prix)}</span><span class="muted">${esc(f.duree||"")}</span></div>
+  const sous = f.type==="direct"&&f.date_debut ? dateFr(f.date_debut) : (f.duree||"");
+  return `<div class="carte-photo" onclick="aller('detail','${f.id}')">
+    <div class="img" style="${bg(photoDe(f))}">
+      <div class="haut"><span class="etiq">${esc(f.metier)}</span><span class="etiq ${f.type==="direct"?"direct":""}">${f.type==="direct"?"En direct":"Vidéo"}</span></div>
+      <div class="bas"><div class="t">${esc(f.titre)}</div>${sous?`<div class="d">${esc(sous)}</div>`:""}</div>
+    </div>
+    <div class="pied">${avatar(f.formatrice)}<div class="nom">${esc(f.formatrice?.nom||"Formatrice")}<small>${esc(f.formatrice?.ville||"")}</small></div><span class="prix">${chf(f.prix)}</span></div>
   </div>`;
 }
 
 /* ---------- DETAIL ---------- */
 async function vueDetail(){
-  const {data:f,error} = await sb.from("formations").select("*, formatrice:profiles!formations_formatrice_id_fkey(id,nom,ville,bio,metier)").eq("id",detailId).maybeSingle();
+  const {data:f,error} = await sb.from("formations").select("*, formatrice:profiles!formations_formatrice_id_fkey(id,nom,ville,bio,metier,photo_url)").eq("id",detailId).maybeSingle();
   if(error) throw error;
   if(!f){app().innerHTML=`<button class="retour" onclick="aller('formations')">Retour</button><div class="vide">Formation introuvable.</div>`;return}
   const proprio = session && (f.formatrice_id===session.user.id || profil?.role==="admin");
@@ -251,9 +304,10 @@ async function vueDetail(){
                 : `<button class="btn plein" onclick="aller('compte')">Se connecter pour voir comment payer</button>`}`;
   }
   app().innerHTML = `
-    <button class="retour" onclick="aller('formations')">Retour aux formations</button>
-    <span class="etiq">${esc(f.metier)}</span><span class="etiq ${f.type==="direct"?"direct":""}">${f.type==="direct"?"En direct":"Vidéo"}</span>
-    <h2 style="margin-top:12px">${esc(f.titre)}</h2>
+    <div class="detail-hero" style="${bg(photoDe(f))}">
+      <button class="retour-rond" onclick="aller('formations')">Retour</button>
+      <div class="bas"><span class="etiq">${esc(f.metier)}</span><span class="etiq ${f.type==="direct"?"direct":""}">${f.type==="direct"?"En direct":"Vidéo"}</span><h1>${esc(f.titre)}</h1></div>
+    </div>
     <div class="carte">
       <p class="info"><b>Prix</b>${chf(f.prix)}</p>
       ${f.duree?`<p class="info"><b>Durée</b>${esc(f.duree)}</p>`:""}
@@ -263,8 +317,8 @@ async function vueDetail(){
     </div>
     ${f.description?`<h3>Contenu</h3><p style="white-space:pre-line">${esc(f.description)}</p>`:""}
     <h3>La formatrice</h3>
-    <div class="carte"><div class="titre" style="margin-top:0">${esc(f.formatrice?.nom||"")}</div>
-      <p class="muted">${esc([f.formatrice?.metier,f.formatrice?.ville].filter(Boolean).join(" - "))}</p>
+    <div class="carte"><div class="ligne" style="justify-content:flex-start;gap:14px">${avatar(f.formatrice,"grand")}<div><div class="titre" style="margin:0">${esc(f.formatrice?.nom||"")}</div>
+      <p class="muted">${esc([f.formatrice?.metier,f.formatrice?.ville].filter(Boolean).join(" - "))}</p></div></div>
       ${f.formatrice?.bio?`<p style="white-space:pre-line">${esc(f.formatrice.bio)}</p>`:""}</div>
     <div class="sep"></div>
     ${bloc}
@@ -416,6 +470,11 @@ async function vueEdition(){
       <button class="tuile ${f.type==="video"?"on":""}" id="t_video" onclick="choisirType('video')">Vidéo</button>
       <button class="tuile ${f.type==="direct"?"on":""}" id="t_direct" onclick="choisirType('direct')">En direct</button>
     </div>
+    <label>Photo de couverture</label>
+    <div class="apercu-photo" id="f_apercu" style="${f.photo_url?bg(f.photo_url)+";border:0":""}" onclick="$('#f_fichier').click()">${f.photo_url?"":"Appuie pour ajouter une photo"}</div>
+    <input type="file" id="f_fichier" accept="image/*" style="display:none" onchange="choisirPhotoFormation(this)">
+    <div class="rang" style="margin-top:10px"><button class="btn" style="margin:0" onclick="$('#f_fichier').click()">${f.photo_url?"Changer la photo":"Choisir une photo"}</button><button class="btn" style="margin:0" onclick="retirerPhotoFormation()">Sans photo</button></div>
+    <p class="muted">Sans photo, une image de la branche est utilisée.</p>
     <label>Titre</label><input id="f_titre" value="${esc(f.titre||"")}" placeholder="Ex. : Dégradé américain pour débutants">
     <label>Métier</label><select id="f_metier">${METIERS.map(m=>`<option ${m===f.metier?"selected":""}>${m}</option>`).join("")}</select>
     <label>Description</label><textarea id="f_desc" placeholder="Ce que l'élève va apprendre, niveau, matériel nécessaire...">${esc(f.description||"")}</textarea>
@@ -439,13 +498,18 @@ async function vueEdition(){
     <button class="btn plein" style="margin-top:20px" onclick="sauverFormation()">Enregistrer</button>
     ${editionId?`<button class="btn danger" onclick="supprimerFormation()">Supprimer la formation</button>`:""}
   `;
-  window._publie=f.publie;
+  window._publie=f.publie; window._photo=f.photo_url||null;
 }
 function choisirType(t){typeEdition=t;$("#t_video").classList.toggle("on",t==="video");$("#t_direct").classList.toggle("on",t==="direct");$("#bloc_video").style.display=t==="video"?"block":"none";$("#bloc_direct").style.display=t==="direct"?"block":"none"}
+async function choisirPhotoFormation(inp){
+  const file=inp.files[0]; if(!file) return;
+  try{const u=await envoyerPhoto(file,1400);window._photo=u;const a=$("#f_apercu");a.style.backgroundImage=`url('${u}')`;a.style.border="0";a.textContent="";toast("Photo ajoutée")}catch(e){erreur(e)}
+}
+function retirerPhotoFormation(){window._photo=null;const a=$("#f_apercu");a.style.backgroundImage="";a.style.border="";a.textContent="Appuie pour ajouter une photo"}
 function choisirVis(v){window._publie=v;$("#v_on").classList.toggle("on",v);$("#v_off").classList.toggle("on",!v)}
 async function sauverFormation(){
   const titre=$("#f_titre").value.trim(); if(!titre) return toast("Indique un titre");
-  const d={titre,metier:$("#f_metier").value,description:$("#f_desc").value.trim(),prix:Number($("#f_prix").value||0),duree:$("#f_duree").value.trim(),type:typeEdition,publie:window._publie!==false};
+  const d={titre,metier:$("#f_metier").value,description:$("#f_desc").value.trim(),prix:Number($("#f_prix").value||0),duree:$("#f_duree").value.trim(),type:typeEdition,publie:window._publie!==false,photo_url:window._photo||null};
   if(typeEdition==="direct"){
     const v=$("#f_date").value; if(!v) return toast("Indique la date et l'heure du direct");
     d.date_debut=new Date(v).toISOString(); d.lieu=$("#f_lieu").value.trim(); d.places=$("#f_places").value?Number($("#f_places").value):null;
@@ -538,6 +602,8 @@ function vueCompte(){
     app().innerHTML = `
       <h2>Mon compte</h2>
       <div class="boite"><b>${roleTxt}</b> - ${esc(profil.email||session.user.email)}</div>
+      <div style="display:flex;align-items:center;gap:16px;margin:8px 0">${avatar(profil,"grand")}<div style="flex:1"><button class="btn" style="margin:0" onclick="$('#c_fichier').click()">${profil.photo_url?"Changer ma photo":"Ajouter ma photo"}</button></div></div>
+      <input type="file" id="c_fichier" accept="image/*" style="display:none" onchange="choisirPhotoProfil(this)">
       <label>Nom et prénom</label><input id="c_nom" value="${esc(profil.nom||"")}">
       <label>Téléphone</label><input id="c_tel" inputmode="tel" value="${esc(profil.telephone||"")}">
       <label>Métier</label><select id="c_metier"><option value="">-</option>${METIERS.map(m=>`<option ${m===profil.metier?"selected":""}>${m}</option>`).join("")}</select>
@@ -598,6 +664,10 @@ async function changerMdp(){
   const p=$("#n_mdp").value; if(p.length<6) return toast("6 caractères minimum");
   const {error}=await sb.auth.updateUser({password:p}); if(error) return erreur(error);
   recuperation=false; toast("Mot de passe changé"); aller("formations");
+}
+async function choisirPhotoProfil(inp){
+  const file=inp.files[0]; if(!file) return;
+  try{const u=await envoyerPhoto(file,500);const {error}=await sb.from("profiles").update({photo_url:u}).eq("id",session.user.id);if(error) throw error;await chargerProfil();toast("Photo enregistrée");rendre()}catch(e){erreur(e)}
 }
 async function sauverProfil(){
   const d={nom:$("#c_nom").value.trim(),telephone:$("#c_tel").value.trim(),metier:$("#c_metier").value,ville:$("#c_ville").value.trim()};
