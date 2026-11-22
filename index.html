@@ -137,7 +137,7 @@ nav.serre button svg{width:23px;height:23px}
   <div class="contenu">
   <p class="grand">Beautyskol</p>
   <p class="by">by Melissa</p>
-  <p class="texte">Les formations des pros de la beauté. Barbier, coiffure, onglerie, maquillage, en vidéo ou en direct.</p>
+  <p class="texte">Les formations des pros de la beauté. Barbier, coiffure, onglerie, maquillage, massage, en vidéo ou en direct.</p>
   <button class="btn" onclick="entrer('formations')">Découvrir les formations</button>
   <button class="btn contour" onclick="entrer('formatrice')">Je suis formatrice</button>
   <p class="credit">Photos : Unsplash</p>
@@ -152,7 +152,7 @@ const SUPABASE_URL = "https://xlllukczsozlslesyefd.supabase.co";
 const SUPABASE_KEY = "sb_publishable_200ncSgnGI_PSjQSOH0xmA_d08ZHQlb";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const METIERS = ["Barbier","Coiffure","Onglerie","Maquillage","Esthétique","Cils et sourcils"];
+const METIERS = ["Barbier","Coiffure","Onglerie","Maquillage","Esthétique","Cils et sourcils","Massage"];
 const U = id => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=900&q=70`;
 const PHOTOS = {
   "Barbier":U("1634480257305-7f4ca3582e6a"),
@@ -161,6 +161,7 @@ const PHOTOS = {
   "Maquillage":U("1709477542170-f11ee7d471a0"),
   "Esthétique":U("1761718209835-c8586b7dcac0"),
   "Cils et sourcils":U("1728432757040-1579d710f607"),
+  "Massage":U("1512290746430-3ffb4fab31bc"),
   "*":U("1709477542149-f4e0e21d590b")
 };
 const photoDe = f => f.photo_url || PHOTOS[f.metier] || PHOTOS["*"];
@@ -264,7 +265,7 @@ function vueAccueil(){
     <p class="muted">Choisis ton métier pour voir les formations qui te concernent.</p>
     <div class="mosaique">
       ${METIERS.map(m=>`<button class="tuile-photo" style="${bg(PHOTOS[m])}" onclick="choisirBranche('${m}')"><span>${m}</span></button>`).join("")}
-      <button class="tuile-photo large" style="${bg(PHOTOS["*"])}" onclick="choisirBranche('*')"><span>Toutes les branches</span></button>
+      <button class="tuile-photo" style="${bg(PHOTOS["*"])}" onclick="choisirBranche('*')"><span>Toutes les branches</span></button>
     </div>
   `;
 }
@@ -675,7 +676,7 @@ let typeInvit = "eleve";
 function messageInvit(t){
   return t==="formatrice"
     ? `Tu donnes des formations en beauté (barbier, coiffure, onglerie, maquillage...) ? Publie-les sur Beautyskol by Melissa et trouve de nouvelles élèves. L'inscription est gratuite, la plateforme prend seulement ${taux()} % par vente.\n\n${URL_APP}`
-    : `Découvre Beautyskol by Melissa : des formations en barbier, coiffure, onglerie, maquillage et esthétique, en vidéo ou en direct, données par des pros.\n\n${URL_APP}`;
+    : `Découvre Beautyskol by Melissa : des formations en barbier, coiffure, onglerie, maquillage, esthétique et massage, en vidéo ou en direct, données par des pros.\n\n${URL_APP}`;
 }
 function vueInviter(){
   app().innerHTML = `
