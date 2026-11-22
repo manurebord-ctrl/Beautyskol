@@ -125,6 +125,15 @@ nav.serre button{font-size:11.5px}
 nav.serre button svg{width:23px;height:23px}
 .btn.wa{background:#1f9e55;border-color:#1f9e55;color:#fff;min-height:64px;font-size:18px}
 .choix2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.etapes{counter-reset:e;margin:8px 0;padding:0;list-style:none}
+.etapes li{counter-increment:e;position:relative;padding:6px 0 6px 40px;font-size:15.5px}
+.etapes li::before{content:counter(e);position:absolute;left:0;top:5px;width:28px;height:28px;border-radius:50%;background:var(--plum);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:14px}
+.chapitre{background:#fff;border:2px solid var(--line);border-radius:16px;padding:12px;margin:10px 0}
+.chapitre .vignette{height:150px;border-radius:12px;background:#2e1428 center/cover no-repeat;margin-top:8px;display:flex;align-items:center;justify-content:center}
+.chapitre .vignette span{background:rgba(0,0,0,.55);color:#fff;border-radius:999px;padding:6px 14px;font-size:14px;font-weight:600}
+.lecteur{position:relative;padding-top:56.25%;border-radius:16px;overflow:hidden;background:#000;margin:8px 0 14px}
+.lecteur iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.btn.live{background:#b3261e;border-color:#b3261e;color:#fff;min-height:68px;font-size:19px}
 .sep{height:2px;background:var(--line);margin:22px 0}
 </style>
 </head>
@@ -258,6 +267,27 @@ async function envoyerPhoto(file,max){
   return sb.storage.from("photos").getPublicUrl(chemin).data.publicUrl;
 }
 
+/* ---------- VIDEOS ---------- */
+function idYoutube(u){u=(u||"").trim();const m=u.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|live\/|embed\/))([A-Za-z0-9_-]{11})/);return m?m[1]:null}
+function lienEmbed(u){
+  const y=idYoutube(u); if(y) return `https://www.youtube-nocookie.com/embed/${y}?rel=0&modestbranding=1&playsinline=1`;
+  const v=(u||"").match(/vimeo\.com\/(?:video\/)?(\d+)/); if(v) return `https://player.vimeo.com/video/${v[1]}`;
+  const d=(u||"").match(/drive\.google\.com\/file\/d\/([^/]+)/); if(d) return `https://drive.google.com/file/d/${d[1]}/preview`;
+  return null;
+}
+function videosDe(a){let v=Array.isArray(a?.videos)?a.videos.filter(x=>x&&x.url):[];if(!v.length&&a?.video_url)v=[{titre:"Vidéo",url:a.video_url}];return v}
+function salleJitsi(titre){
+  const s=(titre||"formation").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Za-z0-9]+/g,"").slice(0,24)||"Formation";
+  const r=Array.from(crypto.getRandomValues(new Uint8Array(6)),b=>"abcdefghjkmnpqrstuvwxyz23456789"[b%31]).join("");
+  return `https://meet.jit.si/Beautyskol-${s}-${r}`;
+}
+function lienDirectPour(u,nom,formatrice){
+  if(!/meet\.jit\.si\//.test(u||"")) return lienSur(u);
+  const base=u.split("#")[0]; const n=encodeURIComponent(JSON.stringify(nom||"Beautyskol"));
+  return formatrice ? `${base}#userInfo.displayName=${n}&config.prejoinPageEnabled=false`
+                    : `${base}#userInfo.displayName=${n}&config.startWithAudioMuted=true&config.startWithVideoMuted=true&config.prejoinPageEnabled=false`;
+}
+
 /* ---------- FORMATIONS ---------- */
 function vueAccueil(){
   app().innerHTML = `
@@ -346,7 +376,7 @@ async function vueDetail(){
       <button class="btn plein" onclick="validerCode('${f.id}')">Valider mon code</button>`;
   let bloc="";
   if(proprio){
-    bloc = `<div class="boite">C'est ta formation.</div>${boutonsAcces(f,acces)}<button class="btn" onclick="editer('${f.id}')">Modifier la formation</button>`;
+    bloc = `<div class="boite">C'est ta formation.</div>${boutonsAcces(f,acces,true)}<button class="btn" onclick="editer('${f.id}')">Modifier la formation</button>`;
   }else if(insc?.statut==="confirmee"){
     bloc = `<div class="boite ok"><b>Inscription confirmée.</b> Bonne formation.</div>${boutonsAcces(f,acces)}`;
   }else if(gratuit){
@@ -386,12 +416,25 @@ async function vueDetail(){
     ${blocAvis}
   `;
 }
-function boutonsAcces(f,a){
-  if(!a) return `<p class="muted">Le lien n'a pas encore été ajouté par la formatrice.</p>`;
-  let h="";
-  if(a.video_url) h+=`<a class="btn plein" href="${esc(lienSur(a.video_url))}" target="_blank" rel="noopener">Regarder la vidéo</a>`;
-  if(a.lien_direct) h+=`<a class="btn plein" href="${esc(lienSur(a.lien_direct))}" target="_blank" rel="noopener">Rejoindre le direct</a>`;
-  return h || `<p class="muted">Le lien n'a pas encore été ajouté par la formatrice.</p>`;
+function boutonsAcces(f,a,proprio){
+  const vide=`<p class="muted">${proprio?"Tu n'as pas encore ajouté":"La formatrice n'a pas encore ajouté"} ${f.type==="direct"?"le lien du direct":"de vidéo"}.</p>`;
+  if(!a) return vide;
+  if(f.type==="direct"){
+    if(!a.lien_direct) return vide;
+    const quand=f.date_debut?`<p class="muted" style="text-align:center">Direct prévu le ${esc(dateFr(f.date_debut))}</p>`:"";
+    return proprio
+      ? `${quand}<a class="btn live" href="${esc(lienDirectPour(a.lien_direct,profil?.nom,true))}" target="_blank" rel="noopener">Démarrer le direct</a>
+         <p class="muted">Ton téléphone filme. Les élèves rejoignent la même salle avec leur bouton « Rejoindre le direct ». Pense à tenir le téléphone en mode paysage.</p>`
+      : `${quand}<a class="btn live" href="${esc(lienDirectPour(a.lien_direct,profil?.nom,false))}" target="_blank" rel="noopener">Rejoindre le direct</a>
+         <p class="muted">Ton micro et ta caméra sont coupés au départ.</p>`;
+  }
+  const vids=videosDe(a); if(!vids.length) return vide;
+  return `<h3>${vids.length>1?"Les vidéos de la formation":"La vidéo"}</h3>`+vids.map((v,i)=>{
+    const emb=lienEmbed(v.url);
+    return `<div><b>${vids.length>1?(i+1)+". ":""}${esc(v.titre||"Vidéo")}</b>
+      ${emb?`<div class="lecteur"><iframe src="${esc(emb)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe></div>`
+           :`<a class="btn plein" href="${esc(lienSur(v.url))}" target="_blank" rel="noopener">Regarder la vidéo</a>`}</div>`;
+  }).join("");
 }
 function boitePaiement(f,pay){
   if(!pay) return `<div class="boite"><p><b>Montant : ${chf(f.prix)}</b></p><p>La formatrice n'a pas encore indiqué ses coordonnées de paiement. Contacte-la directement.</p></div>`;
@@ -557,13 +600,39 @@ async function vueEdition(){
     <label>Prix en CHF</label><input id="f_prix" type="number" inputmode="decimal" min="0" step="0.5" value="${f.prix??""}">
     <label>Durée</label><input id="f_duree" value="${esc(f.duree||"")}" placeholder="Ex. : 2 heures">
     <div id="bloc_video" style="display:${f.type==="video"?"block":"none"}">
-      <label>Lien de la vidéo</label><input id="f_video" value="${esc(a.video_url||"")}" placeholder="Lien YouTube non répertorié, Vimeo, Google Drive...">
-      <p class="muted">Ce lien n'est visible que par les élèves dont tu as confirmé le paiement.</p>
+      <h3>Tes vidéos</h3>
+      <div class="carte" style="margin-top:6px">
+        <b>Mettre une vidéo en ligne, gratuitement :</b>
+        <ol class="etapes">
+          <li>Appuie sur « Ouvrir YouTube » : l'appli YouTube s'ouvre.</li>
+          <li>Appuie sur le <b>+</b> en bas, puis <b>Vidéo</b> : filme ou choisis ta vidéo.</li>
+          <li>Dans <b>Visibilité</b>, choisis <b>Non répertoriée</b> (très important), puis publie.</li>
+          <li>Sur ta vidéo, appuie sur <b>Partager</b>, puis <b>Copier le lien</b>.</li>
+          <li>Reviens ici et appuie sur « Coller le lien ».</li>
+        </ol>
+        <a class="btn rose" href="https://www.youtube.com/upload" target="_blank" rel="noopener">Ouvrir YouTube</a>
+        <p class="muted">« Non répertoriée » : la vidéo n'apparaît pas dans les recherches YouTube. Elle ne s'affiche dans Beautyskol qu'aux élèves qui ont un code.</p>
+      </div>
+      <div id="liste_videos"></div>
+      <button class="btn plein" onclick="ajouterVideo(true)">Coller le lien</button>
+      <button class="btn" onclick="ajouterVideo(false)">Ajouter une vidéo à la main</button>
     </div>
     <div id="bloc_direct" style="display:${f.type==="direct"?"block":"none"}">
-      <label>Date et heure</label><input id="f_date" type="datetime-local" value="${dl}">
-      <label>Lieu ou plateforme</label><input id="f_lieu" value="${esc(f.lieu||"")}" placeholder="Ex. : Zoom, ou adresse du salon">
-      <label>Lien du direct</label><input id="f_lien" value="${esc(a.lien_direct||"")}" placeholder="Lien Zoom, Google Meet, Instagram Live...">
+      <label>Date et heure du direct</label><input id="f_date" type="datetime-local" value="${dl}">
+      <h3>Ta salle de direct</h3>
+      <div class="carte" style="margin-top:6px">
+        <p>Le direct se fait avec <b>Jitsi Meet</b>, gratuit : tu filmes avec ton téléphone et tes élèves te voient en direct.</p>
+        <ol class="etapes">
+          <li>Appuie sur « Créer ma salle de direct » (une seule fois).</li>
+          <li>Le jour J, ouvre ta formation et appuie sur « Démarrer le direct ».</li>
+          <li>La première fois, Jitsi te demande de te connecter avec ton compte Google : c'est normal, tu es l'animatrice.</li>
+        </ol>
+        <div id="salle_info"></div>
+        <button class="btn rose" onclick="creerSalle()">Créer ma salle de direct</button>
+        <button class="retour" onclick="$('#autre_lien').style.display='block'">Ou utiliser mon propre lien (Zoom, Google Meet...)</button>
+        <div id="autre_lien" style="display:none"><input id="f_lien_perso" placeholder="Colle ici ton lien Zoom ou Google Meet" oninput="window._lien=this.value.trim();afficherSalle()"></div>
+      </div>
+      <label>Lieu ou plateforme</label><input id="f_lieu" value="${esc(f.lieu||"En ligne, en direct")}">
       <label>Nombre de places (facultatif)</label><input id="f_places" type="number" inputmode="numeric" min="1" value="${f.places??""}">
     </div>
     <label>Visibilité</label>
@@ -574,9 +643,39 @@ async function vueEdition(){
     <button class="btn plein" style="margin-top:20px" onclick="sauverFormation()">Enregistrer</button>
     ${editionId?`<button class="btn danger" onclick="supprimerFormation()">Supprimer la formation</button>`:""}
   `;
-  window._publie=f.publie; window._photo=f.photo_url||null;
+  window._publie=f.publie; window._photo=f.photo_url||null; window._videos=videosDe(a).map(v=>({titre:v.titre||"",url:v.url})); window._lien=a.lien_direct||""; afficherVideos(); afficherSalle();
 }
 function choisirType(t){typeEdition=t;$("#t_video").classList.toggle("on",t==="video");$("#t_direct").classList.toggle("on",t==="direct");$("#bloc_video").style.display=t==="video"?"block":"none";$("#bloc_direct").style.display=t==="direct"?"block":"none"}
+function afficherVideos(){
+  const z=$("#liste_videos"); if(!z) return;
+  const v=window._videos||[];
+  z.innerHTML = v.length ? v.map((x,i)=>{const y=idYoutube(x.url);return `<div class="chapitre">
+      <div class="ligne"><b>Vidéo ${i+1}</b><button class="retour" style="color:var(--bad);padding:0" onclick="retirerVideo(${i})">Retirer</button></div>
+      <input value="${esc(x.titre)}" placeholder="Titre (ex. : Partie 1 - Préparation)" oninput="window._videos[${i}].titre=this.value" style="margin-top:8px">
+      <input value="${esc(x.url)}" placeholder="Lien de la vidéo" oninput="window._videos[${i}].url=this.value.trim()" onchange="afficherVideos()" style="margin-top:8px">
+      ${y?`<div class="vignette" style="${bg("https://img.youtube.com/vi/"+y+"/hqdefault.jpg")}"><span>Vidéo YouTube reconnue</span></div>`:x.url?`<p class="muted">Lien enregistré (non YouTube : il s'ouvrira dans une autre page).</p>`:""}
+    </div>`}).join("") : `<p class="muted">Aucune vidéo pour l'instant.</p>`;
+}
+async function ajouterVideo(depuisPressePapier){
+  let url="";
+  if(depuisPressePapier){
+    try{url=(await navigator.clipboard.readText()||"").trim()}catch(e){}
+    if(!/^https?:\/\//i.test(url)){toast("Aucun lien copié. Copie d'abord le lien dans YouTube.");return}
+  }
+  window._videos=window._videos||[];
+  if(url&&window._videos.some(v=>v.url===url)) return toast("Cette vidéo est déjà ajoutée");
+  window._videos.push({titre:window._videos.length?`Partie ${window._videos.length+1}`:"Vidéo",url});
+  afficherVideos(); if(url) toast("Vidéo ajoutée");
+}
+function retirerVideo(i){window._videos.splice(i,1);afficherVideos()}
+function afficherSalle(){
+  const z=$("#salle_info"); if(!z) return;
+  z.innerHTML = window._lien ? `<div class="boite ok" style="word-break:break-all"><b>Salle prête.</b><br>${esc(window._lien)}</div>` : "";
+}
+function creerSalle(){
+  if(window._lien&&/meet\.jit\.si/.test(window._lien)&&!confirm("Tu as déjà une salle. En créer une nouvelle ?")) return;
+  window._lien=salleJitsi($("#f_titre").value); afficherSalle(); toast("Salle créée, pense à enregistrer");
+}
 async function choisirPhotoFormation(inp){
   const file=inp.files[0]; if(!file) return;
   try{const u=await envoyerPhoto(file,1400);window._photo=u;const a=$("#f_apercu");a.style.backgroundImage=`url('${u}')`;a.style.border="0";a.textContent="";toast("Photo ajoutée")}catch(e){erreur(e)}
@@ -598,7 +697,8 @@ async function sauverFormation(){
     if(error) return erreur(error.message?.includes("row-level")?{message:"ton compte doit être validé pour publier"}:error);
     id=data.id;
   }
-  const acc={formation_id:id,video_url:typeEdition==="video"?$("#f_video").value.trim():null,lien_direct:typeEdition==="direct"?$("#f_lien").value.trim():null};
+  const vids=typeEdition==="video"?(window._videos||[]).filter(v=>v.url).map((v,i)=>({titre:(v.titre||"").trim()||`Partie ${i+1}`,url:v.url})):[];
+  const acc={formation_id:id,videos:vids,video_url:vids[0]?.url||null,lien_direct:typeEdition==="direct"?(window._lien||null):null};
   const {error:e2}=await sb.from("formation_acces").upsert(acc,{onConflict:"formation_id"});
   if(e2) return erreur(e2);
   toast("Formation enregistrée"); editionId=null; aller("formatrice");
