@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#4a2340">
+<title>Beautyskol - Formations beauté</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --plum:#4a2340; --plum2:#6b3a5e; --rose:#c98b8b; --nude:#f3e6e1;
+  --cream:#fbf7f4; --ink:#2b1d26; --muted:#7a6872; --line:#e3d3cd;
+  --ok:#2f6b4f; --warn:#9a5b12; --bad:#9b2c2c;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--cream);color:var(--ink);font-family:Inter,system-ui,sans-serif;font-size:17px;line-height:1.45}
+header{position:sticky;top:0;z-index:5;background:var(--plum);color:#fff;padding:14px 18px 12px;padding-top:calc(14px + env(safe-area-inset-top))}
+.logo{font-family:"Cormorant Garamond",serif;font-size:30px;font-weight:700;letter-spacing:.5px;margin:0}
+.slogan{font-size:13px;opacity:.8;margin-top:-2px}
+main{padding:16px 16px 120px;max-width:720px;margin:0 auto}
+h2{font-family:"Cormorant Garamond",serif;font-size:28px;margin:6px 0 12px;color:var(--plum)}
+h3{font-size:18px;margin:18px 0 8px;color:var(--plum)}
+p{margin:6px 0}
+.muted{color:var(--muted);font-size:15px}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:58px;padding:12px 16px;margin:10px 0;
+  border:2px solid var(--plum);border-radius:14px;background:#fff;color:var(--plum);font:inherit;font-weight:700;font-size:17px;cursor:pointer;text-align:center;text-decoration:none}
+.btn:active{transform:scale(.98)}
+.btn.plein{background:var(--plum);color:#fff}
+.btn.rose{background:var(--rose);border-color:var(--rose);color:#fff}
+.btn.danger{border-color:var(--bad);color:var(--bad)}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn[disabled]{opacity:.45}
+.rang{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rang .btn{margin:0}
+.grille{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.tuile{min-height:56px;border:2px solid var(--line);border-radius:14px;background:#fff;font:inherit;font-weight:600;font-size:16px;color:var(--ink);padding:10px}
+.tuile.on{border-color:var(--plum);background:var(--plum);color:#fff}
+.carte{background:#fff;border:2px solid var(--line);border-radius:18px;padding:16px;margin:12px 0}
+.carte.clic{cursor:pointer}
+.carte.clic:active{border-color:var(--plum)}
+.etiq{display:inline-block;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:4px 10px;border-radius:999px;background:var(--nude);color:var(--plum);margin-right:6px}
+.etiq.direct{background:var(--rose);color:#fff}
+.titre{font-size:20px;font-weight:700;margin:10px 0 4px}
+.prix{font-size:20px;font-weight:700;color:var(--plum)}
+.ligne{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.boite{border-radius:14px;padding:14px;margin:12px 0;background:var(--nude);border:2px solid var(--line)}
+.boite.ok{background:#e6f2ec;border-color:#b9d9c8}
+.boite.warn{background:#fbf0e0;border-color:#ecd2a8}
+.boite.bad{background:#f8e5e5;border-color:#e6bcbc}
+label{display:block;font-weight:600;margin:14px 0 6px}
+input,select,textarea{width:100%;min-height:54px;padding:12px 14px;border:2px solid var(--line);border-radius:12px;font:inherit;background:#fff;color:var(--ink)}
+textarea{min-height:110px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--plum)}
+.info{font-size:16px;margin:4px 0}
+.info b{display:inline-block;min-width:110px;color:var(--muted);font-weight:600}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:6;background:#fff;border-top:2px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;min-height:66px;border:0;background:none;font:inherit;font-size:14px;font-weight:600;color:var(--muted);border-top:4px solid transparent}
+nav button.on{color:var(--plum);border-top-color:var(--plum)}
+#toast{position:fixed;left:16px;right:16px;bottom:86px;z-index:9;background:var(--ink);color:#fff;padding:16px;border-radius:14px;font-weight:600;text-align:center;display:none}
+.vide{text-align:center;color:var(--muted);padding:30px 10px}
+.retour{background:none;border:0;font:inherit;font-weight:700;color:var(--plum);padding:10px 0;font-size:17px}
+.sep{height:2px;background:var(--line);margin:22px 0}
+</style>
+</head>
+<body>
+<header>
+  <p class="logo">Beautyskol</p>
+  <div class="slogan">Formations barbier, coiffure, onglerie et beauté</div>
+</header>
+<main id="app"><p class="vide">Chargement...</p></main>
+<nav id="nav"></nav>
+<div id="toast"></div>
+
+<script>
+const SUPABASE_URL = "https://xlllukczsozlslesyefd.supabase.co";
+const SUPABASE_KEY = "sb_publishable_200ncSgnGI_PSjQSOH0xmA_d08ZHQlb";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const METIERS = ["Barbier","Coiffure","Onglerie","Maquillage","Esthétique","Cils et sourcils"];
+const STATUTS_INSC = {a_payer:"À payer", paiement_annonce:"Paiement annoncé", confirmee:"Confirmée", refusee:"Refusée"};
+
+let session = null, profil = null, params = null;
+let vue = "formations", detailId = null, editionId = null;
+let filtres = {metier:"", type:""};
+let modeCompte = "connexion", typeInscr = "eleve", recuperation = false;
+
+const $ = s => document.querySelector(s);
+const app = () => $("#app");
+function esc(t){return (t??"").toString().replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function chf(n){n=Number(n||0);return n===0?"Gratuit":"CHF "+n.toFixed(2).replace(".00",".-")}
+function dateFr(d){if(!d)return"";return new Date(d).toLocaleString("fr-CH",{weekday:"long",day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"})}
+function jourFr(d){if(!d)return"";return new Date(d+"T12:00:00").toLocaleDateString("fr-CH",{day:"numeric",month:"long",year:"numeric"})}
+function toast(m){const t=$("#toast");t.textContent=m;t.style.display="block";clearTimeout(t._t);t._t=setTimeout(()=>t.style.display="none",3200)}
+function erreur(e){console.error(e);toast(e?.message ? "Erreur : "+e.message : "Une erreur est survenue")}
+function lienSur(u){u=(u||"").trim();if(!u)return"";if(!/^https?:\/\//i.test(u))u="https://"+u;return u}
+function aujourdhui(){return new Date().toISOString().slice(0,10)}
+function abonnementActif(p){return p && (p.role==="admin" || (p.role==="formatrice" && p.statut==="validee" && p.abonnement_jusqua && p.abonnement_jusqua>=aujourdhui()))}
+
+async function chargerProfil(){
+  if(!session){profil=null;return}
+  const {data} = await sb.from("profiles").select("*").eq("id",session.user.id).maybeSingle();
+  profil = data;
+}
+async function chargerParams(){
+  const {data} = await sb.from("parametres").select("*").eq("id",1).maybeSingle();
+  params = data || {prix_abonnement:29};
+}
+
+function aller(v, id){vue=v; if(id!==undefined) detailId=id; window.scrollTo(0,0); rendre();}
+
+function rendreNav(){
+  const onglets = [["formations","Formations"],["cours","Mes cours"]];
+  if(profil && (profil.role==="formatrice"||profil.role==="admin")) onglets.push(["formatrice","Formatrice"]);
+  if(profil && profil.role==="admin") onglets.push(["admin","Admin"]);
+  onglets.push(["compte", session?"Compte":"Connexion"]);
+  const actif = vue==="detail"?"formations":(vue==="edition"?"formatrice":vue);
+  $("#nav").innerHTML = onglets.map(([k,l])=>`<button class="${k===actif?"on":""}" onclick="aller('${k}')">${l}</button>`).join("");
+}
+
+async function rendre(){
+  rendreNav();
+  try{
+    if(recuperation) return vueNouveauMdp();
+    if(vue==="formations") return await vueFormations();
+    if(vue==="detail") return await vueDetail();
+    if(vue==="cours") return await vueCours();
+    if(vue==="formatrice") return await vueFormatrice();
+    if(vue==="edition") return await vueEdition();
+    if(vue==="admin") return await vueAdmin();
+    if(vue==="compte") return vueCompte();
+  }catch(e){erreur(e)}
+}
+
+/* ---------- FORMATIONS ---------- */
+async function vueFormations(){
+  let q = sb.from("formations").select("*, formatrice:profiles!formations_formatrice_id_fkey(nom,ville)").eq("publie",true).order("created_at",{ascending:false});
+  if(filtres.metier) q=q.eq("metier",filtres.metier);
+  if(filtres.type) q=q.eq("type",filtres.type);
+  const {data,error} = await q; if(error) throw error;
+  const liste = (data||[]).filter(f=>f.type!=="direct" || !f.date_debut || new Date(f.date_debut)>new Date(Date.now()-3*3600e3));
+  app().innerHTML = `
+    <h2>Trouver une formation</h2>
+    <div class="grille">
+      <button class="tuile ${filtres.metier===""?"on":""}" onclick="filtrer('metier','')">Tous les métiers</button>
+      ${METIERS.map(m=>`<button class="tuile ${filtres.metier===m?"on":""}" onclick="filtrer('metier','${m}')">${m}</button>`).join("")}
+    </div>
+    <div class="grille" style="grid-template-columns:1fr 1fr 1fr">
+      <button class="tuile ${filtres.type===""?"on":""}" onclick="filtrer('type','')">Tout</button>
+      <button class="tuile ${filtres.type==="video"?"on":""}" onclick="filtrer('type','video')">En vidéo</button>
+      <button class="tuile ${filtres.type==="direct"?"on":""}" onclick="filtrer('type','direct')">En direct</button>
+    </div>
+    ${liste.length? liste.map(carteFormation).join("") : `<div class="vide">Aucune formation pour le moment dans cette catégorie.</div>`}
+  `;
+}
+function filtrer(k,v){filtres[k]=v;rendre()}
+function carteFormation(f){
+  return `<div class="carte clic" onclick="aller('detail','${f.id}')">
+    <span class="etiq">${esc(f.metier)}</span><span class="etiq ${f.type==="direct"?"direct":""}">${f.type==="direct"?"En direct":"Vidéo"}</span>
+    <div class="titre">${esc(f.titre)}</div>
+    <p class="muted">Par ${esc(f.formatrice?.nom||"Formatrice")}${f.formatrice?.ville?" - "+esc(f.formatrice.ville):""}</p>
+    ${f.type==="direct"&&f.date_debut?`<p class="muted">${esc(dateFr(f.date_debut))}</p>`:""}
+    <div class="ligne" style="margin-top:8px"><span class="prix">${chf(f.prix)}</span><span class="muted">${esc(f.duree||"")}</span></div>
+  </div>`;
+}
+
+/* ---------- DETAIL ---------- */
+async function vueDetail(){
+  const {data:f,error} = await sb.from("formations").select("*, formatrice:profiles!formations_formatrice_id_fkey(id,nom,ville,bio,metier)").eq("id",detailId).maybeSingle();
+  if(error) throw error;
+  if(!f){app().innerHTML=`<button class="retour" onclick="aller('formations')">Retour</button><div class="vide">Formation introuvable.</div>`;return}
+  const proprio = session && (f.formatrice_id===session.user.id || profil?.role==="admin");
+  let insc=null, pay=null, acces=null;
+  if(session){
+    const r = await sb.from("inscriptions").select("*").eq("formation_id",f.id).eq("eleve_id",session.user.id).maybeSingle(); insc=r.data;
+    if(insc && insc.statut!=="confirmee"){const p=await sb.from("paiement_infos").select("*").eq("formatrice_id",f.formatrice_id).maybeSingle(); pay=p.data;}
+    if(proprio || insc?.statut==="confirmee"){const a=await sb.from("formation_acces").select("*").eq("formation_id",f.id).maybeSingle(); acces=a.data;}
+  }
+  let bloc="";
+  if(proprio){
+    bloc = `<div class="boite">C'est ta formation.</div>${boutonsAcces(f,acces)}<button class="btn" onclick="editer('${f.id}')">Modifier la formation</button>`;
+  }else if(!session){
+    bloc = `<button class="btn plein" onclick="aller('compte')">Se connecter pour s'inscrire</button>`;
+  }else if(!insc){
+    bloc = `<button class="btn plein" onclick="sInscrire('${f.id}')">S'inscrire à cette formation</button>
+      <p class="muted">Tu paies ensuite directement la formatrice. Dès qu'elle confirme ton paiement, tu as accès ${f.type==="direct"?"au lien du direct":"à la vidéo"}.</p>`;
+  }else if(insc.statut==="confirmee"){
+    bloc = `<div class="boite ok"><b>Inscription confirmée.</b> Bonne formation.</div>${boutonsAcces(f,acces)}`;
+  }else if(insc.statut==="refusee"){
+    bloc = `<div class="boite bad"><b>Inscription refusée.</b> Contacte la formatrice si tu penses qu'il y a une erreur.</div>
+      <button class="btn danger" onclick="annulerInsc('${insc.id}')">Supprimer l'inscription</button>`;
+  }else{
+    bloc = `${insc.statut==="paiement_annonce"
+        ? `<div class="boite warn"><b>Paiement annoncé.</b> La formatrice va vérifier et confirmer ton accès.</div>`
+        : `<div class="boite"><b>Étape suivante :</b> paie la formation à la formatrice, puis appuie sur « J'ai payé ».</div>`}
+      ${boitePaiement(f,insc,pay)}
+      ${insc.statut==="a_payer"?`<button class="btn plein" onclick="jaiPaye('${insc.id}')">J'ai payé</button>`:""}
+      <button class="btn danger" onclick="annulerInsc('${insc.id}')">Annuler mon inscription</button>`;
+  }
+  app().innerHTML = `
+    <button class="retour" onclick="aller('formations')">Retour aux formations</button>
+    <span class="etiq">${esc(f.metier)}</span><span class="etiq ${f.type==="direct"?"direct":""}">${f.type==="direct"?"En direct":"Vidéo"}</span>
+    <h2 style="margin-top:12px">${esc(f.titre)}</h2>
+    <div class="carte">
+      <p class="info"><b>Prix</b>${chf(f.prix)}</p>
+      ${f.duree?`<p class="info"><b>Durée</b>${esc(f.duree)}</p>`:""}
+      ${f.type==="direct"&&f.date_debut?`<p class="info"><b>Date</b>${esc(dateFr(f.date_debut))}</p>`:""}
+      ${f.lieu?`<p class="info"><b>Lieu</b>${esc(f.lieu)}</p>`:""}
+      ${f.places?`<p class="info"><b>Places</b>${f.places}</p>`:""}
+    </div>
+    ${f.description?`<h3>Contenu</h3><p style="white-space:pre-line">${esc(f.description)}</p>`:""}
+    <h3>La formatrice</h3>
+    <div class="carte"><div class="titre" style="margin-top:0">${esc(f.formatrice?.nom||"")}</div>
+      <p class="muted">${esc([f.formatrice?.metier,f.formatrice?.ville].filter(Boolean).join(" - "))}</p>
+      ${f.formatrice?.bio?`<p style="white-space:pre-line">${esc(f.formatrice.bio)}</p>`:""}</div>
+    <div class="sep"></div>
+    ${bloc}
+  `;
+}
+function boutonsAcces(f,a){
+  if(!a) return `<p class="muted">Le lien n'a pas encore été ajouté par la formatrice.</p>`;
+  let h="";
+  if(a.video_url) h+=`<a class="btn plein" href="${esc(lienSur(a.video_url))}" target="_blank" rel="noopener">Regarder la vidéo</a>`;
+  if(a.lien_direct) h+=`<a class="btn plein" href="${esc(lienSur(a.lien_direct))}" target="_blank" rel="noopener">Rejoindre le direct</a>`;
+  return h || `<p class="muted">Le lien n'a pas encore été ajouté par la formatrice.</p>`;
+}
+function boitePaiement(f,insc,pay){
+  const ref = "BSK-"+insc.id.slice(0,6).toUpperCase();
+  if(!pay) return `<div class="boite"><p><b>Montant : ${chf(f.prix)}</b></p><p>La formatrice n'a pas encore indiqué ses coordonnées de paiement. Contacte-la ou reviens plus tard.</p></div>`;
+  return `<div class="carte">
+    <p class="info"><b>Montant</b>${chf(f.prix)}</p>
+    ${pay.titulaire?`<p class="info"><b>Au nom de</b>${esc(pay.titulaire)}</p>`:""}
+    ${pay.twint?`<p class="info"><b>TWINT</b>${esc(pay.twint)}</p>`:""}
+    ${pay.iban?`<p class="info"><b>IBAN</b>${esc(pay.iban)}</p>`:""}
+    <p class="info"><b>Référence</b>${ref}</p>
+    ${pay.remarque?`<p class="muted" style="white-space:pre-line">${esc(pay.remarque)}</p>`:""}
+  </div>`;
+}
+async function sInscrire(fid){
+  const {error}=await sb.from("inscriptions").insert({formation_id:fid,eleve_id:session.user.id});
+  if(error) return erreur(error); toast("Inscription enregistrée"); rendre();
+}
+async function jaiPaye(id){
+  const {error}=await sb.from("inscriptions").update({statut:"paiement_annonce"}).eq("id",id);
+  if(error) return erreur(error); toast("Merci, la formatrice va confirmer"); rendre();
+}
+async function annulerInsc(id){
+  if(!confirm("Annuler cette inscription ?")) return;
+  const {error}=await sb.from("inscriptions").delete().eq("id",id);
+  if(error) return erreur(error); toast("Inscription annulée"); rendre();
+}
+
+/* ---------- MES COURS ---------- */
+async function vueCours(){
+  if(!session){app().innerHTML=`<h2>Mes cours</h2><p>Connecte-toi pour voir les formations auxquelles tu es inscrite.</p><button class="btn plein" onclick="aller('compte')">Se connecter</button>`;return}
+  const {data,error}=await sb.from("inscriptions").select("*, formation:formations(id,titre,metier,type,date_debut,prix)").eq("eleve_id",session.user.id).order("created_at",{ascending:false});
+  if(error) throw error;
+  const l=(data||[]).filter(i=>i.formation);
+  app().innerHTML = `<h2>Mes cours</h2>${l.length? l.map(i=>`
+    <div class="carte clic" onclick="aller('detail','${i.formation.id}')">
+      <span class="etiq">${esc(i.formation.metier)}</span><span class="etiq ${i.formation.type==="direct"?"direct":""}">${i.formation.type==="direct"?"En direct":"Vidéo"}</span>
+      <div class="titre">${esc(i.formation.titre)}</div>
+      ${i.formation.type==="direct"&&i.formation.date_debut?`<p class="muted">${esc(dateFr(i.formation.date_debut))}</p>`:""}
+      <div class="boite ${i.statut==="confirmee"?"ok":i.statut==="refusee"?"bad":i.statut==="paiement_annonce"?"warn":""}" style="margin-bottom:0"><b>${STATUTS_INSC[i.statut]}</b>${i.statut==="confirmee"?" - appuie pour ouvrir":""}</div>
+    </div>`).join("") : `<div class="vide">Tu n'es inscrite à aucune formation.</div><button class="btn plein" onclick="aller('formations')">Voir les formations</button>`}`;
+}
+
+/* ---------- ESPACE FORMATRICE ---------- */
+async function vueFormatrice(){
+  if(!profil || !(profil.role==="formatrice"||profil.role==="admin")){aller("compte");return}
+  const actif = abonnementActif(profil);
+  let statut="";
+  if(profil.role==="admin") statut=`<div class="boite ok"><b>Compte administratrice.</b> Tes formations sont toujours visibles.</div>`;
+  else if(profil.statut==="en_attente") statut=`<div class="boite warn"><b>Compte en attente de validation.</b> L'administratrice de Beautyskol va vérifier ton profil. Complète ta présentation dans l'onglet Compte en attendant.</div>`;
+  else if(profil.statut==="refusee") statut=`<div class="boite bad"><b>Ta demande n'a pas été acceptée.</b> Contacte Beautyskol pour en savoir plus.</div>`;
+  else if(actif) statut=`<div class="boite ok"><b>Abonnement actif</b> jusqu'au ${esc(jourFr(profil.abonnement_jusqua))}.</div>`;
+  else statut=`<div class="boite warn"><b>Abonnement inactif.</b> Tes formations ne sont pas visibles par les élèves.
+      <p>Abonnement : <b>${chf(params?.prix_abonnement)} par mois</b></p>
+      ${params?.paiement_plateforme?`<p style="white-space:pre-line">${esc(params.paiement_plateforme)}</p>`:""}
+      ${params?.contact?`<p>Contact : ${esc(params.contact)}</p>`:""}
+      <p class="muted">L'abonnement est activé par l'administratrice dès réception du paiement.</p></div>`;
+
+  const peutPublier = actif || profil.statut==="validee";
+  const {data:formations} = await sb.from("formations").select("*").eq("formatrice_id",session.user.id).order("created_at",{ascending:false});
+  const ids=(formations||[]).map(f=>f.id);
+  let inscs=[];
+  if(ids.length){
+    const r=await sb.from("inscriptions").select("*, eleve:profiles!inscriptions_eleve_id_fkey(nom,email,telephone)").in("formation_id",ids).order("created_at",{ascending:false});
+    inscs=r.data||[];
+  }
+  const {data:pay} = await sb.from("paiement_infos").select("*").eq("formatrice_id",session.user.id).maybeSingle();
+  const aTraiter = inscs.filter(i=>i.statut==="paiement_annonce"||i.statut==="a_payer");
+  const titreDe = id => (formations.find(f=>f.id===id)||{}).titre||"";
+
+  app().innerHTML = `
+    <h2>Espace formatrice</h2>
+    ${statut}
+    ${peutPublier?`<button class="btn plein" onclick="editer(null)">Nouvelle formation</button>`:""}
+
+    <h3>Paiements à vérifier (${aTraiter.length})</h3>
+    ${aTraiter.length? aTraiter.map(i=>`
+      <div class="carte">
+        <div class="titre" style="margin-top:0">${esc(i.eleve?.nom||"Élève")}</div>
+        <p class="muted">${esc(titreDe(i.formation_id))}</p>
+        <p class="muted">${esc(i.eleve?.email||"")}${i.eleve?.telephone?" - "+esc(i.eleve.telephone):""}</p>
+        <p>Référence : <b>BSK-${i.id.slice(0,6).toUpperCase()}</b> - ${STATUTS_INSC[i.statut]}</p>
+        <div class="rang"><button class="btn ok" onclick="traiterInsc('${i.id}','confirmee')">Paiement reçu</button><button class="btn danger" onclick="traiterInsc('${i.id}','refusee')">Refuser</button></div>
+      </div>`).join("") : `<p class="muted">Rien à vérifier pour le moment.</p>`}
+
+    <h3>Mes formations (${(formations||[]).length})</h3>
+    ${(formations||[]).length? formations.map(f=>{
+      const n=inscs.filter(i=>i.formation_id===f.id&&i.statut==="confirmee").length;
+      return `<div class="carte">
+        <span class="etiq">${esc(f.metier)}</span><span class="etiq ${f.type==="direct"?"direct":""}">${f.type==="direct"?"En direct":"Vidéo"}</span>
+        <div class="titre">${esc(f.titre)}</div>
+        <p class="muted">${chf(f.prix)} - ${n} élève(s) confirmée(s)${f.publie?"":" - masquée"}</p>
+        <div class="rang"><button class="btn" onclick="aller('detail','${f.id}')">Voir</button><button class="btn" onclick="editer('${f.id}')">Modifier</button></div>
+      </div>`}).join("") : `<p class="muted">Tu n'as pas encore créé de formation.</p>`}
+
+    <h3>Mes coordonnées de paiement</h3>
+    <p class="muted">Les élèves te paient directement. Ces infos leur sont montrées après leur inscription.</p>
+    <label>Au nom de</label><input id="p_tit" value="${esc(pay?.titulaire||profil.nom||"")}">
+    <label>Numéro TWINT</label><input id="p_twint" inputmode="tel" value="${esc(pay?.twint||"")}" placeholder="079 123 45 67">
+    <label>IBAN</label><input id="p_iban" value="${esc(pay?.iban||"")}" placeholder="CH00 0000 0000 0000 0000 0">
+    <label>Remarque (facultatif)</label><textarea id="p_rem" placeholder="Ex. : indiquer la référence dans le message">${esc(pay?.remarque||"")}</textarea>
+    <button class="btn plein" onclick="sauverPaiement(${pay?"true":"false"})">Enregistrer mes coordonnées</button>
+  `;
+}
+async function traiterInsc(id,statut){
+  const {error}=await sb.from("inscriptions").update({statut}).eq("id",id);
+  if(error) return erreur(error); toast(statut==="confirmee"?"Accès donné à l'élève":"Inscription refusée"); rendre();
+}
+async function sauverPaiement(existe){
+  const d={formatrice_id:session.user.id,titulaire:$("#p_tit").value.trim(),twint:$("#p_twint").value.trim(),iban:$("#p_iban").value.trim(),remarque:$("#p_rem").value.trim()};
+  const {error}= existe ? await sb.from("paiement_infos").update(d).eq("formatrice_id",session.user.id) : await sb.from("paiement_infos").insert(d);
+  if(error) return erreur(error); toast("Coordonnées enregistrées"); rendre();
+}
+
+/* ---------- CREATION / MODIFICATION ---------- */
+let typeEdition="video";
+function editer(id){editionId=id;vue="edition";window.scrollTo(0,0);rendre()}
+async function vueEdition(){
+  let f={type:"video",metier:profil?.metier&&METIERS.includes(profil.metier)?profil.metier:METIERS[0],publie:true}, a={};
+  if(editionId){
+    const r=await sb.from("formations").select("*").eq("id",editionId).maybeSingle(); if(r.data) f=r.data;
+    const r2=await sb.from("formation_acces").select("*").eq("formation_id",editionId).maybeSingle(); if(r2.data) a=r2.data;
+  }
+  typeEdition=f.type;
+  const dl = f.date_debut ? new Date(new Date(f.date_debut).getTime()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16) : "";
+  app().innerHTML = `
+    <button class="retour" onclick="aller('formatrice')">Retour</button>
+    <h2>${editionId?"Modifier la formation":"Nouvelle formation"}</h2>
+    <label>Type de formation</label>
+    <div class="rang">
+      <button class="tuile ${f.type==="video"?"on":""}" id="t_video" onclick="choisirType('video')">Vidéo</button>
+      <button class="tuile ${f.type==="direct"?"on":""}" id="t_direct" onclick="choisirType('direct')">En direct</button>
+    </div>
+    <label>Titre</label><input id="f_titre" value="${esc(f.titre||"")}" placeholder="Ex. : Dégradé américain pour débutants">
+    <label>Métier</label><select id="f_metier">${METIERS.map(m=>`<option ${m===f.metier?"selected":""}>${m}</option>`).join("")}</select>
+    <label>Description</label><textarea id="f_desc" placeholder="Ce que l'élève va apprendre, niveau, matériel nécessaire...">${esc(f.description||"")}</textarea>
+    <label>Prix en CHF</label><input id="f_prix" type="number" inputmode="decimal" min="0" step="0.5" value="${f.prix??""}">
+    <label>Durée</label><input id="f_duree" value="${esc(f.duree||"")}" placeholder="Ex. : 2 heures">
+    <div id="bloc_video" style="display:${f.type==="video"?"block":"none"}">
+      <label>Lien de la vidéo</label><input id="f_video" value="${esc(a.video_url||"")}" placeholder="Lien YouTube non répertorié, Vimeo, Google Drive...">
+      <p class="muted">Ce lien n'est visible que par les élèves dont tu as confirmé le paiement.</p>
+    </div>
+    <div id="bloc_direct" style="display:${f.type==="direct"?"block":"none"}">
+      <label>Date et heure</label><input id="f_date" type="datetime-local" value="${dl}">
+      <label>Lieu ou plateforme</label><input id="f_lieu" value="${esc(f.lieu||"")}" placeholder="Ex. : Zoom, ou adresse du salon">
+      <label>Lien du direct</label><input id="f_lien" value="${esc(a.lien_direct||"")}" placeholder="Lien Zoom, Google Meet, Instagram Live...">
+      <label>Nombre de places (facultatif)</label><input id="f_places" type="number" inputmode="numeric" min="1" value="${f.places??""}">
+    </div>
+    <label>Visibilité</label>
+    <div class="rang">
+      <button class="tuile ${f.publie?"on":""}" id="v_on" onclick="choisirVis(true)">Visible</button>
+      <button class="tuile ${!f.publie?"on":""}" id="v_off" onclick="choisirVis(false)">Masquée</button>
+    </div>
+    <button class="btn plein" style="margin-top:20px" onclick="sauverFormation()">Enregistrer</button>
+    ${editionId?`<button class="btn danger" onclick="supprimerFormation()">Supprimer la formation</button>`:""}
+  `;
+  window._publie=f.publie;
+}
+function choisirType(t){typeEdition=t;$("#t_video").classList.toggle("on",t==="video");$("#t_direct").classList.toggle("on",t==="direct");$("#bloc_video").style.display=t==="video"?"block":"none";$("#bloc_direct").style.display=t==="direct"?"block":"none"}
+function choisirVis(v){window._publie=v;$("#v_on").classList.toggle("on",v);$("#v_off").classList.toggle("on",!v)}
+async function sauverFormation(){
+  const titre=$("#f_titre").value.trim(); if(!titre) return toast("Indique un titre");
+  const d={titre,metier:$("#f_metier").value,description:$("#f_desc").value.trim(),prix:Number($("#f_prix").value||0),duree:$("#f_duree").value.trim(),type:typeEdition,publie:window._publie!==false};
+  if(typeEdition==="direct"){
+    const v=$("#f_date").value; if(!v) return toast("Indique la date et l'heure du direct");
+    d.date_debut=new Date(v).toISOString(); d.lieu=$("#f_lieu").value.trim(); d.places=$("#f_places").value?Number($("#f_places").value):null;
+  }else{d.date_debut=null;d.lieu=null;d.places=null}
+  let id=editionId;
+  if(id){const {error}=await sb.from("formations").update(d).eq("id",id); if(error) return erreur(error)}
+  else{
+    d.formatrice_id=session.user.id;
+    const {data,error}=await sb.from("formations").insert(d).select("id").single();
+    if(error) return erreur(error.message?.includes("row-level")?{message:"ton abonnement doit être actif pour publier"}:error);
+    id=data.id;
+  }
+  const acc={formation_id:id,video_url:typeEdition==="video"?$("#f_video").value.trim():null,lien_direct:typeEdition==="direct"?$("#f_lien").value.trim():null};
+  const {error:e2}=await sb.from("formation_acces").upsert(acc,{onConflict:"formation_id"});
+  if(e2) return erreur(e2);
+  toast("Formation enregistrée"); editionId=null; aller("formatrice");
+}
+async function supprimerFormation(){
+  if(!confirm("Supprimer définitivement cette formation et ses inscriptions ?")) return;
+  const {error}=await sb.from("formations").delete().eq("id",editionId);
+  if(error) return erreur(error); toast("Formation supprimée"); editionId=null; aller("formatrice");
+}
+
+/* ---------- ADMIN ---------- */
+async function vueAdmin(){
+  if(profil?.role!=="admin"){aller("formations");return}
+  const {data,error}=await sb.from("profiles").select("*").eq("role","formatrice").order("created_at",{ascending:false});
+  if(error) throw error;
+  const attente=data.filter(p=>p.statut==="en_attente"), valid=data.filter(p=>p.statut==="validee"), refus=data.filter(p=>p.statut==="refusee");
+  const actives=valid.filter(abonnementActif).length;
+  app().innerHTML = `
+    <h2>Administration</h2>
+    <div class="rang">
+      <div class="carte" style="margin:0;text-align:center"><div class="prix">${actives}</div><div class="muted">abonnements actifs</div></div>
+      <div class="carte" style="margin:0;text-align:center"><div class="prix">${chf(actives*(params?.prix_abonnement||0))}</div><div class="muted">par mois</div></div>
+    </div>
+
+    <h3>Demandes à valider (${attente.length})</h3>
+    ${attente.length? attente.map(p=>`<div class="carte">${infosFormatrice(p)}
+      <div class="rang"><button class="btn ok" onclick="statutF('${p.id}','validee')">Valider</button><button class="btn danger" onclick="statutF('${p.id}','refusee')">Refuser</button></div></div>`).join("") : `<p class="muted">Aucune demande en attente.</p>`}
+
+    <h3>Formatrices validées (${valid.length})</h3>
+    ${valid.length? valid.map(p=>{const ok=abonnementActif(p);return `<div class="carte">${infosFormatrice(p)}
+      <div class="boite ${ok?"ok":"warn"}" style="margin:8px 0">${ok?`Abonnement actif jusqu'au <b>${esc(jourFr(p.abonnement_jusqua))}</b>`:`Abonnement inactif${p.abonnement_jusqua?" (fini le "+esc(jourFr(p.abonnement_jusqua))+")":""}`}</div>
+      <div class="rang"><button class="btn plein" onclick="prolonger('${p.id}','${p.abonnement_jusqua||""}',1)">+ 1 mois</button><button class="btn" onclick="prolonger('${p.id}','${p.abonnement_jusqua||""}',12)">+ 12 mois</button></div>
+      <div class="rang" style="margin-top:10px"><button class="btn" onclick="stopAbo('${p.id}')">Arrêter l'abonnement</button><button class="btn danger" onclick="statutF('${p.id}','refusee')">Bloquer</button></div>
+    </div>`}).join("") : `<p class="muted">Aucune formatrice validée.</p>`}
+
+    ${refus.length?`<h3>Refusées ou bloquées (${refus.length})</h3>${refus.map(p=>`<div class="carte">${infosFormatrice(p)}<button class="btn" onclick="statutF('${p.id}','validee')">Réactiver</button></div>`).join("")}`:""}
+
+    <h3>Réglages de l'abonnement</h3>
+    <label>Prix mensuel en CHF</label><input id="a_prix" type="number" inputmode="decimal" min="0" value="${params?.prix_abonnement??29}">
+    <label>Comment les formatrices te paient</label><textarea id="a_pay" placeholder="Ex. : TWINT au 079..., ou IBAN CH..., au nom de...">${esc(params?.paiement_plateforme||"")}</textarea>
+    <label>Contact affiché</label><input id="a_contact" value="${esc(params?.contact||"")}" placeholder="E-mail ou téléphone">
+    <button class="btn plein" onclick="sauverParams()">Enregistrer les réglages</button>
+  `;
+}
+function infosFormatrice(p){
+  return `<div class="titre" style="margin-top:0">${esc(p.nom||"Sans nom")}</div>
+    <p class="muted">${esc([p.metier,p.ville].filter(Boolean).join(" - "))}</p>
+    <p class="muted">${esc(p.email||"")}${p.telephone?" - "+esc(p.telephone):""}</p>
+    ${p.bio?`<p style="white-space:pre-line">${esc(p.bio)}</p>`:""}`;
+}
+async function statutF(id,statut){
+  if(statut==="refusee"&&!confirm("Confirmer ?")) return;
+  const {error}=await sb.from("profiles").update({statut}).eq("id",id);
+  if(error) return erreur(error); toast("Statut mis à jour"); rendre();
+}
+async function prolonger(id,actuel,mois){
+  const base = actuel && actuel>=aujourdhui() ? new Date(actuel+"T12:00:00") : new Date();
+  base.setMonth(base.getMonth()+mois);
+  const {error}=await sb.from("profiles").update({abonnement_jusqua:base.toISOString().slice(0,10)}).eq("id",id);
+  if(error) return erreur(error); toast("Abonnement prolongé"); rendre();
+}
+async function stopAbo(id){
+  if(!confirm("Arrêter l'abonnement ? Ses formations ne seront plus visibles.")) return;
+  const hier=new Date(Date.now()-864e5).toISOString().slice(0,10);
+  const {error}=await sb.from("profiles").update({abonnement_jusqua:hier}).eq("id",id);
+  if(error) return erreur(error); toast("Abonnement arrêté"); rendre();
+}
+async function sauverParams(){
+  const {error}=await sb.from("parametres").update({prix_abonnement:Number($("#a_prix").value||0),paiement_plateforme:$("#a_pay").value.trim(),contact:$("#a_contact").value.trim()}).eq("id",1);
+  if(error) return erreur(error); await chargerParams(); toast("Réglages enregistrés"); rendre();
+}
+
+/* ---------- COMPTE ---------- */
+function vueCompte(){
+  if(session && profil){
+    const roleTxt = profil.role==="admin"?"Administratrice":profil.role==="formatrice"?"Formatrice":"Élève";
+    app().innerHTML = `
+      <h2>Mon compte</h2>
+      <div class="boite"><b>${roleTxt}</b> - ${esc(profil.email||session.user.email)}</div>
+      <label>Nom et prénom</label><input id="c_nom" value="${esc(profil.nom||"")}">
+      <label>Téléphone</label><input id="c_tel" inputmode="tel" value="${esc(profil.telephone||"")}">
+      <label>Métier</label><select id="c_metier"><option value="">-</option>${METIERS.map(m=>`<option ${m===profil.metier?"selected":""}>${m}</option>`).join("")}</select>
+      <label>Ville</label><input id="c_ville" value="${esc(profil.ville||"")}">
+      ${profil.role!=="eleve"?`<label>Présentation (visible par les élèves)</label><textarea id="c_bio" placeholder="Ton parcours, ton salon, tes spécialités...">${esc(profil.bio||"")}</textarea>`:""}
+      <button class="btn plein" onclick="sauverProfil()">Enregistrer</button>
+      ${profil.role==="eleve"?`<div class="sep"></div><h3>Tu donnes des formations ?</h3><p class="muted">Demande un compte formatrice. Après validation, tu pourras publier tes formations avec un abonnement mensuel.</p><button class="btn rose" onclick="devenirFormatrice()">Devenir formatrice</button>`:""}
+      <div class="sep"></div>
+      <button class="btn danger" onclick="deconnexion()">Se déconnecter</button>`;
+    return;
+  }
+  const connexion = modeCompte==="connexion";
+  app().innerHTML = `
+    <h2>${connexion?"Connexion":"Créer un compte"}</h2>
+    <div class="rang">
+      <button class="tuile ${connexion?"on":""}" onclick="modeCompte='connexion';rendre()">J'ai un compte</button>
+      <button class="tuile ${!connexion?"on":""}" onclick="modeCompte='inscription';rendre()">Nouveau compte</button>
+    </div>
+    ${!connexion?`
+      <label>Je suis</label>
+      <div class="rang">
+        <button class="tuile ${typeInscr==="eleve"?"on":""}" onclick="typeInscr='eleve';majType()" id="ti_e">Élève</button>
+        <button class="tuile ${typeInscr==="formatrice"?"on":""}" onclick="typeInscr='formatrice';majType()" id="ti_f">Formatrice</button>
+      </div>
+      <label>Nom et prénom</label><input id="i_nom" autocomplete="name">
+      <label>Métier</label><select id="i_metier"><option value="">-</option>${METIERS.map(m=>`<option>${m}</option>`).join("")}</select>
+      <label>Ville</label><input id="i_ville">`:""}
+    <label>E-mail</label><input id="i_mail" type="email" inputmode="email" autocomplete="email">
+    <label>Mot de passe</label><input id="i_mdp" type="password" autocomplete="${connexion?"current-password":"new-password"}" placeholder="${connexion?"":"6 caractères minimum"}">
+    <button class="btn plein" style="margin-top:20px" onclick="${connexion?"connexion()":"inscription()"}">${connexion?"Se connecter":"Créer mon compte"}</button>
+    ${connexion?`<button class="btn" onclick="mdpOublie()">Mot de passe oublié</button>`:""}
+  `;
+}
+function majType(){$("#ti_e").classList.toggle("on",typeInscr==="eleve");$("#ti_f").classList.toggle("on",typeInscr==="formatrice")}
+const urlRetour = () => location.origin + location.pathname;
+async function connexion(){
+  const email=$("#i_mail").value.trim(), password=$("#i_mdp").value;
+  if(!email||!password) return toast("Indique ton e-mail et ton mot de passe");
+  const {error}=await sb.auth.signInWithPassword({email,password});
+  if(error) return toast(error.message.includes("confirm")?"Confirme d'abord ton e-mail (lien reçu par mail)":"E-mail ou mot de passe incorrect");
+}
+async function inscription(){
+  const nom=$("#i_nom").value.trim(), email=$("#i_mail").value.trim(), password=$("#i_mdp").value;
+  if(!nom||!email||password.length<6) return toast("Remplis nom, e-mail et un mot de passe de 6 caractères minimum");
+  const {data,error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:urlRetour(),data:{nom,type:typeInscr,metier:$("#i_metier").value,ville:$("#i_ville").value.trim()}}});
+  if(error) return erreur(error);
+  if(!data.session){app().innerHTML=`<h2>Presque fini</h2><div class="boite ok">Un e-mail de confirmation a été envoyé à <b>${esc(email)}</b>. Ouvre-le et appuie sur le lien pour activer ton compte.</div><button class="btn" onclick="modeCompte='connexion';rendre()">Retour à la connexion</button>`}
+}
+async function mdpOublie(){
+  const email=$("#i_mail").value.trim(); if(!email) return toast("Indique d'abord ton e-mail");
+  const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:urlRetour()});
+  if(error) return erreur(error); toast("E-mail envoyé pour changer le mot de passe");
+}
+function vueNouveauMdp(){
+  app().innerHTML=`<h2>Nouveau mot de passe</h2><label>Nouveau mot de passe</label><input id="n_mdp" type="password" autocomplete="new-password"><button class="btn plein" onclick="changerMdp()">Enregistrer</button>`;
+}
+async function changerMdp(){
+  const p=$("#n_mdp").value; if(p.length<6) return toast("6 caractères minimum");
+  const {error}=await sb.auth.updateUser({password:p}); if(error) return erreur(error);
+  recuperation=false; toast("Mot de passe changé"); aller("formations");
+}
+async function sauverProfil(){
+  const d={nom:$("#c_nom").value.trim(),telephone:$("#c_tel").value.trim(),metier:$("#c_metier").value,ville:$("#c_ville").value.trim()};
+  if($("#c_bio")) d.bio=$("#c_bio").value.trim();
+  const {error}=await sb.from("profiles").update(d).eq("id",session.user.id);
+  if(error) return erreur(error); await chargerProfil(); toast("Profil enregistré"); rendre();
+}
+async function devenirFormatrice(){
+  const {error}=await sb.from("profiles").update({role:"formatrice"}).eq("id",session.user.id);
+  if(error) return erreur(error); await chargerProfil(); toast("Demande envoyée à l'administratrice"); aller("formatrice");
+}
+async function deconnexion(){await sb.auth.signOut(); aller("formations")}
+
+/* ---------- DEMARRAGE ---------- */
+sb.auth.onAuthStateChange(async (ev, s)=>{
+  session=s;
+  if(ev==="PASSWORD_RECOVERY") recuperation=true;
+  if(ev==="SIGNED_IN"||ev==="SIGNED_OUT"||ev==="PASSWORD_RECOVERY"){
+    setTimeout(async()=>{await chargerProfil(); if(ev==="SIGNED_IN"&&vue==="compte") vue="formations"; rendre();},0);
+  }
+});
+(async()=>{
+  const {data}=await sb.auth.getSession(); session=data.session;
+  await Promise.all([chargerProfil(), chargerParams()]);
+  rendre();
+})();
+</script>
+</body>
+</html>
