@@ -22,7 +22,7 @@ html,body{margin:0;background:var(--cream);color:var(--ink);font-family:Inter,sy
 header{position:sticky;top:0;z-index:5;background:var(--plum);color:#fff;padding:14px 18px 12px;padding-top:calc(14px + env(safe-area-inset-top))}
 .logo{font-family:"Cormorant Garamond",serif;font-size:30px;font-weight:700;letter-spacing:.5px;margin:0}
 .slogan{font-size:13px;opacity:.8;margin-top:-2px}
-main{padding:16px 16px 120px;max-width:720px;margin:0 auto}
+main{padding:16px 16px 130px;max-width:720px;margin:0 auto}
 h2{font-family:"Cormorant Garamond",serif;font-size:28px;margin:6px 0 12px;color:var(--plum)}
 h3{font-size:18px;margin:18px 0 8px;color:var(--plum)}
 p{margin:6px 0}
@@ -58,10 +58,12 @@ textarea{min-height:110px;resize:vertical}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--plum)}
 .info{font-size:16px;margin:4px 0}
 .info b{display:inline-block;min-width:110px;color:var(--muted);font-weight:600}
-nav{position:fixed;bottom:0;left:0;right:0;z-index:6;background:#fff;border-top:2px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
-nav button{flex:1;min-width:0;min-height:66px;border:0;background:none;font:inherit;font-size:14px;padding:0 2px;font-weight:600;color:var(--muted);border-top:4px solid transparent}
-nav button.on{color:var(--plum);border-top-color:var(--plum)}
-#toast{position:fixed;left:16px;right:16px;bottom:86px;z-index:9;background:var(--ink);color:#fff;padding:16px;border-radius:14px;font-weight:600;text-align:center;display:none}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:6;background:#2e1428;display:flex;gap:4px;padding:8px 6px calc(8px + env(safe-area-inset-bottom));box-shadow:0 -6px 20px rgba(46,20,40,.25)}
+nav button{flex:1;min-width:0;min-height:62px;border:0;border-radius:16px;background:none;font:inherit;font-size:13.5px;font-weight:700;color:rgba(255,255,255,.82);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px 2px;cursor:pointer}
+nav button svg{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+nav button.on{background:#c98b8b;color:#fff}
+nav button:active{transform:scale(.96)}
+#toast{position:fixed;left:16px;right:16px;bottom:100px;z-index:9;background:var(--ink);color:#fff;padding:16px;border-radius:14px;font-weight:600;text-align:center;display:none}
 .vide{text-align:center;color:var(--muted);padding:30px 10px}
 .retour{background:none;border:0;font:inherit;font-weight:700;color:var(--plum);padding:10px 0;font-size:17px}
 .btn.branche{min-height:76px;font-size:21px;font-family:"Cormorant Garamond",serif;letter-spacing:.3px;background:#fff;border-color:var(--plum)}
@@ -119,7 +121,8 @@ header{background:linear-gradient(90deg,#2e1428,#4a2340)}
 .choix-etoiles button.on{color:#c98b8b;border-color:#c98b8b;background:#fbf0ee}
 .avis{border-top:1px solid var(--line);padding:12px 0}
 .avis:first-child{border-top:0}
-nav.serre button{font-size:12px}
+nav.serre button{font-size:11.5px}
+nav.serre button svg{width:23px;height:23px}
 .btn.wa{background:#1f9e55;border-color:#1f9e55;color:#fff;min-height:64px;font-size:18px}
 .choix2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
 .sep{height:2px;background:var(--line);margin:22px 0}
@@ -210,7 +213,15 @@ function rendreNav(){
   onglets.push(["compte", session?"Compte":"Connexion"]);
   $("#nav").classList.toggle("serre", onglets.length>5);
   const actif = vue==="detail"?"formations":(vue==="edition"?"formatrice":vue);
-  $("#nav").innerHTML = onglets.map(([k,l])=>`<button class="${k===actif?"on":""}" onclick="aller('${k}')">${l}</button>`).join("");
+  const IC={
+    formations:'<rect x="3" y="4" width="18" height="14" rx="3"/><path d="M10 8.5v5l4.5-2.5z"/><path d="M8 21h8"/>',
+    cours:'<path d="M4 5.5C7 4 10 4.5 12 6c2-1.5 5-2 8-.5V19c-3-1.5-6-1-8 .5-2-1.5-5-2-8-.5z"/><path d="M12 6v13.5"/>',
+    formatrice:'<circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c1.2-4 4-5.5 7.5-5.5s6.3 1.5 7.5 5.5"/><path d="M17 4l1.2 1.2L20.5 3"/>',
+    admin:'<path d="M12 3l7.5 3v5.5c0 4.5-3.2 8-7.5 9.5-4.3-1.5-7.5-5-7.5-9.5V6z"/><path d="M9 12l2 2 4-4"/>',
+    inviter:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.3-5.3 6.5-5.3s5.7 1.7 6.5 5.3"/><path d="M19 8v6M16 11h6"/>',
+    compte:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="10" r="3"/><path d="M6.5 18.5c1.3-2.3 3.2-3.3 5.5-3.3s4.2 1 5.5 3.3"/>'
+  };
+  $("#nav").innerHTML = onglets.map(([k,l])=>`<button class="${k===actif?"on":""}" onclick="aller('${k}')"><svg viewBox="0 0 24 24">${IC[k]||""}</svg>${l}</button>`).join("");
 }
 
 async function rendre(){
